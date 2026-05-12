@@ -1,0 +1,14 @@
+{
+  "autoencoder.pt": {
+    "sha256": "aef9a50ec034d7e20a9aa34a07f6271158c412f29ca1ea67a4923794eb8383e7",
+    "size": 10400
+  },
+  "scaler.pkl": {
+    "sha256": "a2f1abf27aa436ebc61fc5612d77e1ed2d544c7127ff9e904b0cd60a6fe64e60",
+    "size": 2087
+  },
+  "threshold.json": {
+    "sha256": "27b50e61ee14a40bc725bffc052263c6a40f0faf8428028076e83673b8903aea",
+    "size": 30
+  }
+}

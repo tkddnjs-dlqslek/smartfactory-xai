@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.pytest_cache/
+
+# KAMP 공개 데이터 (별도 다운로드 — REPRODUCE.md 참고)
+dataset/
+
+# Derived large files (스크립트로 재생성 가능)
+results/scored_795k.parquet
+results/scored_unlabeled.parquet
+
+# 임시 PPT 작업 파일
+output/_template_*.pptx
+output/_preview/
+output/~$*.pptx
+~$*
+
+# IDE / 캐시
+.vscode/
+.idea/
+.claude/
+.streamlit/secrets.toml
+.guide_dismissed
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 가상환경
+*.egg-info/
+build/
+dist/

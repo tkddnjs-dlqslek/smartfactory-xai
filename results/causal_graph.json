@@ -1,0 +1,1023 @@
+{
+  "nodes": [
+    {
+      "id": "Injection_Time",
+      "label": "Injection Time",
+      "stage": 8,
+      "category": "시간"
+    },
+    {
+      "id": "Filling_Time",
+      "label": "Filling Time",
+      "stage": 9,
+      "category": "시간"
+    },
+    {
+      "id": "Plasticizing_Time",
+      "label": "Plasticizing Time",
+      "stage": 5,
+      "category": "시간"
+    },
+    {
+      "id": "Cycle_Time",
+      "label": "Cycle Time",
+      "stage": 13,
+      "category": "시간"
+    },
+    {
+      "id": "Clamp_Close_Time",
+      "label": "Clamp Close Time",
+      "stage": 14,
+      "category": "시간"
+    },
+    {
+      "id": "Cushion_Position",
+      "label": "Cushion Position",
+      "stage": 11,
+      "category": "위치"
+    },
+    {
+      "id": "Plasticizing_Position",
+      "label": "Plasticizing Position",
+      "stage": 5,
+      "category": "위치"
+    },
+    {
+      "id": "Clamp_Open_Position",
+      "label": "Clamp Open Position",
+      "stage": 14,
+      "category": "위치"
+    },
+    {
+      "id": "Max_Injection_Speed",
+      "label": "Max Injection Speed",
+      "stage": 6,
+      "category": "기타"
+    },
+    {
+      "id": "Max_Screw_RPM",
+      "label": "Max Screw RPM",
+      "stage": 3,
+      "category": "RPM"
+    },
+    {
+      "id": "Average_Screw_RPM",
+      "label": "Average Screw RPM",
+      "stage": 3,
+      "category": "RPM"
+    },
+    {
+      "id": "Max_Injection_Pressure",
+      "label": "Max Injection Pressure",
+      "stage": 7,
+      "category": "압력"
+    },
+    {
+      "id": "Max_Switch_Over_Pressure",
+      "label": "Max Switch Over Pressure",
+      "stage": 10,
+      "category": "압력"
+    },
+    {
+      "id": "Max_Back_Pressure",
+      "label": "Max Back Pressure",
+      "stage": 4,
+      "category": "압력"
+    },
+    {
+      "id": "Average_Back_Pressure",
+      "label": "Average Back Pressure",
+      "stage": 4,
+      "category": "압력"
+    },
+    {
+      "id": "Barrel_Temperature_1",
+      "label": "Barrel Temperature 1",
+      "stage": 2,
+      "category": "온도"
+    },
+    {
+      "id": "Barrel_Temperature_2",
+      "label": "Barrel Temperature 2",
+      "stage": 2,
+      "category": "온도"
+    },
+    {
+      "id": "Barrel_Temperature_3",
+      "label": "Barrel Temperature 3",
+      "stage": 2,
+      "category": "온도"
+    },
+    {
+      "id": "Barrel_Temperature_4",
+      "label": "Barrel Temperature 4",
+      "stage": 2,
+      "category": "온도"
+    },
+    {
+      "id": "Barrel_Temperature_5",
+      "label": "Barrel Temperature 5",
+      "stage": 2,
+      "category": "온도"
+    },
+    {
+      "id": "Barrel_Temperature_6",
+      "label": "Barrel Temperature 6",
+      "stage": 2,
+      "category": "온도"
+    },
+    {
+      "id": "Hopper_Temperature",
+      "label": "Hopper Temperature",
+      "stage": 1,
+      "category": "온도"
+    },
+    {
+      "id": "Mold_Temperature_3",
+      "label": "Mold Temperature 3",
+      "stage": 12,
+      "category": "온도"
+    },
+    {
+      "id": "Mold_Temperature_4",
+      "label": "Mold Temperature 4",
+      "stage": 12,
+      "category": "온도"
+    }
+  ],
+  "edges": [
+    {
+      "source": "Injection_Time",
+      "target": "Filling_Time",
+      "weight": 0.766
+    },
+    {
+      "source": "Injection_Time",
+      "target": "Cycle_Time",
+      "weight": 0.975
+    },
+    {
+      "source": "Injection_Time",
+      "target": "Clamp_Close_Time",
+      "weight": 0.97
+    },
+    {
+      "source": "Injection_Time",
+      "target": "Cushion_Position",
+      "weight": 0.967
+    },
+    {
+      "source": "Injection_Time",
+      "target": "Clamp_Open_Position",
+      "weight": 0.966
+    },
+    {
+      "source": "Injection_Time",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.689
+    },
+    {
+      "source": "Filling_Time",
+      "target": "Cycle_Time",
+      "weight": 0.833
+    },
+    {
+      "source": "Filling_Time",
+      "target": "Clamp_Close_Time",
+      "weight": 0.891
+    },
+    {
+      "source": "Filling_Time",
+      "target": "Cushion_Position",
+      "weight": 0.892
+    },
+    {
+      "source": "Filling_Time",
+      "target": "Clamp_Open_Position",
+      "weight": 0.906
+    },
+    {
+      "source": "Filling_Time",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.95
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Injection_Time",
+      "weight": 0.708
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Filling_Time",
+      "weight": 0.82
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Cycle_Time",
+      "weight": 0.758
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Clamp_Close_Time",
+      "weight": 0.765
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Cushion_Position",
+      "weight": 0.773
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Clamp_Open_Position",
+      "weight": 0.796
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Max_Injection_Speed",
+      "weight": 0.898
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.757
+    },
+    {
+      "source": "Plasticizing_Time",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.761
+    },
+    {
+      "source": "Cycle_Time",
+      "target": "Clamp_Close_Time",
+      "weight": 0.975
+    },
+    {
+      "source": "Cycle_Time",
+      "target": "Clamp_Open_Position",
+      "weight": 0.977
+    },
+    {
+      "source": "Cushion_Position",
+      "target": "Cycle_Time",
+      "weight": 0.973
+    },
+    {
+      "source": "Cushion_Position",
+      "target": "Clamp_Close_Time",
+      "weight": 0.993
+    },
+    {
+      "source": "Cushion_Position",
+      "target": "Clamp_Open_Position",
+      "weight": 0.995
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Injection_Time",
+      "weight": 0.909
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Filling_Time",
+      "weight": 0.926
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Cycle_Time",
+      "weight": 0.936
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Clamp_Close_Time",
+      "weight": 0.973
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Cushion_Position",
+      "weight": 0.971
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Clamp_Open_Position",
+      "weight": 0.971
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Max_Injection_Speed",
+      "weight": 0.805
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.966
+    },
+    {
+      "source": "Plasticizing_Position",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.853
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Injection_Time",
+      "weight": 0.664
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Filling_Time",
+      "weight": 0.948
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Cycle_Time",
+      "weight": 0.735
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Clamp_Close_Time",
+      "weight": 0.792
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Cushion_Position",
+      "weight": 0.801
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Clamp_Open_Position",
+      "weight": 0.819
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.771
+    },
+    {
+      "source": "Max_Injection_Speed",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.909
+    },
+    {
+      "source": "Average_Screw_RPM",
+      "target": "Mold_Temperature_3",
+      "weight": 0.429
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Injection_Time",
+      "weight": 0.982
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Filling_Time",
+      "weight": 0.869
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Cycle_Time",
+      "weight": 0.981
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Clamp_Close_Time",
+      "weight": 0.997
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Cushion_Position",
+      "weight": 0.994
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Clamp_Open_Position",
+      "weight": 0.996
+    },
+    {
+      "source": "Max_Injection_Pressure",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.796
+    },
+    {
+      "source": "Max_Switch_Over_Pressure",
+      "target": "Cycle_Time",
+      "weight": 0.763
+    },
+    {
+      "source": "Max_Switch_Over_Pressure",
+      "target": "Clamp_Close_Time",
+      "weight": 0.822
+    },
+    {
+      "source": "Max_Switch_Over_Pressure",
+      "target": "Cushion_Position",
+      "weight": 0.825
+    },
+    {
+      "source": "Max_Switch_Over_Pressure",
+      "target": "Clamp_Open_Position",
+      "weight": 0.836
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Injection_Time",
+      "weight": 0.673
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Filling_Time",
+      "weight": 0.806
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Plasticizing_Time",
+      "weight": 0.652
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Cycle_Time",
+      "weight": 0.648
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Clamp_Close_Time",
+      "weight": 0.761
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Cushion_Position",
+      "weight": 0.767
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Plasticizing_Position",
+      "weight": 0.738
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Clamp_Open_Position",
+      "weight": 0.767
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Max_Injection_Speed",
+      "weight": 0.792
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.745
+    },
+    {
+      "source": "Max_Back_Pressure",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.763
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Injection_Time",
+      "weight": 0.917
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Filling_Time",
+      "weight": 0.922
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Plasticizing_Time",
+      "weight": 0.805
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Cycle_Time",
+      "weight": 0.915
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Clamp_Close_Time",
+      "weight": 0.969
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Cushion_Position",
+      "weight": 0.969
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Plasticizing_Position",
+      "weight": 0.941
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Clamp_Open_Position",
+      "weight": 0.974
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Max_Injection_Speed",
+      "weight": 0.864
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.963
+    },
+    {
+      "source": "Average_Back_Pressure",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.855
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Injection_Time",
+      "weight": 0.948
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Filling_Time",
+      "weight": 0.889
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Plasticizing_Time",
+      "weight": 0.779
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Cycle_Time",
+      "weight": 0.961
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Clamp_Close_Time",
+      "weight": 0.979
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Cushion_Position",
+      "weight": 0.977
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Plasticizing_Position",
+      "weight": 0.954
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Clamp_Open_Position",
+      "weight": 0.982
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Max_Injection_Speed",
+      "weight": 0.802
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.977
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.82
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Max_Back_Pressure",
+      "weight": 0.75
+    },
+    {
+      "source": "Barrel_Temperature_1",
+      "target": "Average_Back_Pressure",
+      "weight": 0.955
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Injection_Time",
+      "weight": 0.945
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Filling_Time",
+      "weight": 0.893
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Plasticizing_Time",
+      "weight": 0.783
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Cycle_Time",
+      "weight": 0.958
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Clamp_Close_Time",
+      "weight": 0.977
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Cushion_Position",
+      "weight": 0.977
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Plasticizing_Position",
+      "weight": 0.953
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Clamp_Open_Position",
+      "weight": 0.981
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Max_Injection_Speed",
+      "weight": 0.809
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.976
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.826
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Max_Back_Pressure",
+      "weight": 0.755
+    },
+    {
+      "source": "Barrel_Temperature_2",
+      "target": "Average_Back_Pressure",
+      "weight": 0.957
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Injection_Time",
+      "weight": 0.953
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Filling_Time",
+      "weight": 0.889
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Plasticizing_Time",
+      "weight": 0.782
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Cycle_Time",
+      "weight": 0.964
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Clamp_Close_Time",
+      "weight": 0.982
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Cushion_Position",
+      "weight": 0.98
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Plasticizing_Position",
+      "weight": 0.957
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Clamp_Open_Position",
+      "weight": 0.985
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Max_Injection_Speed",
+      "weight": 0.803
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.981
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.818
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Max_Back_Pressure",
+      "weight": 0.75
+    },
+    {
+      "source": "Barrel_Temperature_3",
+      "target": "Average_Back_Pressure",
+      "weight": 0.957
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Injection_Time",
+      "weight": 0.882
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Filling_Time",
+      "weight": 0.831
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Plasticizing_Time",
+      "weight": 0.747
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Cycle_Time",
+      "weight": 0.887
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Clamp_Close_Time",
+      "weight": 0.912
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Cushion_Position",
+      "weight": 0.909
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Plasticizing_Position",
+      "weight": 0.888
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Clamp_Open_Position",
+      "weight": 0.915
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Max_Injection_Speed",
+      "weight": 0.76
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.913
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.753
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Max_Back_Pressure",
+      "weight": 0.737
+    },
+    {
+      "source": "Barrel_Temperature_4",
+      "target": "Average_Back_Pressure",
+      "weight": 0.901
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Injection_Time",
+      "weight": 0.929
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Filling_Time",
+      "weight": 0.867
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Plasticizing_Time",
+      "weight": 0.766
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Cycle_Time",
+      "weight": 0.936
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Clamp_Close_Time",
+      "weight": 0.956
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Cushion_Position",
+      "weight": 0.955
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Plasticizing_Position",
+      "weight": 0.93
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Clamp_Open_Position",
+      "weight": 0.96
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Max_Injection_Speed",
+      "weight": 0.786
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.956
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.794
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Max_Back_Pressure",
+      "weight": 0.744
+    },
+    {
+      "source": "Barrel_Temperature_5",
+      "target": "Average_Back_Pressure",
+      "weight": 0.938
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Injection_Time",
+      "weight": 0.835
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Filling_Time",
+      "weight": 0.766
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Plasticizing_Time",
+      "weight": 0.661
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Cycle_Time",
+      "weight": 0.843
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Clamp_Close_Time",
+      "weight": 0.855
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Cushion_Position",
+      "weight": 0.853
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Plasticizing_Position",
+      "weight": 0.83
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Clamp_Open_Position",
+      "weight": 0.857
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Max_Injection_Speed",
+      "weight": 0.681
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.854
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.72
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Max_Back_Pressure",
+      "weight": 0.625
+    },
+    {
+      "source": "Barrel_Temperature_6",
+      "target": "Average_Back_Pressure",
+      "weight": 0.823
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Injection_Time",
+      "weight": 0.875
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Filling_Time",
+      "weight": 0.642
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Plasticizing_Time",
+      "weight": 0.41
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Cycle_Time",
+      "weight": 0.835
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Clamp_Close_Time",
+      "weight": 0.854
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Cushion_Position",
+      "weight": 0.851
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Plasticizing_Position",
+      "weight": 0.833
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Clamp_Open_Position",
+      "weight": 0.834
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Max_Injection_Speed",
+      "weight": 0.483
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Max_Injection_Pressure",
+      "weight": 0.864
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Max_Switch_Over_Pressure",
+      "weight": 0.607
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Max_Back_Pressure",
+      "weight": 0.617
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Average_Back_Pressure",
+      "weight": 0.794
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Barrel_Temperature_1",
+      "weight": 0.819
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Barrel_Temperature_2",
+      "weight": 0.818
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Barrel_Temperature_3",
+      "weight": 0.823
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Barrel_Temperature_4",
+      "weight": 0.758
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Barrel_Temperature_5",
+      "weight": 0.796
+    },
+    {
+      "source": "Hopper_Temperature",
+      "target": "Barrel_Temperature_6",
+      "weight": 0.719
+    }
+  ],
+  "meta": {
+    "method": "Time-Ordered Correlation (사출성형 사이클 제약)",
+    "threshold": 0.4,
+    "n_nodes": 24,
+    "n_edges": 173,
+    "data_n": 5357,
+    "note": "Pearson |r| ≥ 0.40 + Cycle Stage 시간 순서 만족 시 인과 추정. PC/GES 알고리즘은 본선 구현 예정."
+  }
+}

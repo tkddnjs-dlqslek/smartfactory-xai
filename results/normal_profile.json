@@ -1,0 +1,242 @@
+{
+  "Injection_Time": {
+    "mean": 9.5757,
+    "std": 0.1444,
+    "p01": 9.5,
+    "p99": 9.64,
+    "sigma2_lo": 9.2869,
+    "sigma2_hi": 9.8645,
+    "sigma3_lo": 9.1425,
+    "sigma3_hi": 10.0089
+  },
+  "Filling_Time": {
+    "mean": 4.444,
+    "std": 0.088,
+    "p01": 4.38,
+    "p99": 4.52,
+    "sigma2_lo": 4.2679,
+    "sigma2_hi": 4.62,
+    "sigma3_lo": 4.1799,
+    "sigma3_hi": 4.708
+  },
+  "Plasticizing_Time": {
+    "mean": 16.8208,
+    "std": 0.2894,
+    "p01": 16.53,
+    "p99": 17.12,
+    "sigma2_lo": 16.2419,
+    "sigma2_hi": 17.3996,
+    "sigma3_lo": 15.9525,
+    "sigma3_hi": 17.689
+  },
+  "Cycle_Time": {
+    "mean": 59.5459,
+    "std": 0.3595,
+    "p01": 59.44,
+    "p99": 59.86,
+    "sigma2_lo": 58.827,
+    "sigma2_hi": 60.2648,
+    "sigma3_lo": 58.4675,
+    "sigma3_hi": 60.6242
+  },
+  "Clamp_Close_Time": {
+    "mean": 7.1135,
+    "std": 0.076,
+    "p01": 7.11,
+    "p99": 7.13,
+    "sigma2_lo": 6.9615,
+    "sigma2_hi": 7.2655,
+    "sigma3_lo": 6.8855,
+    "sigma3_hi": 7.3416
+  },
+  "Cushion_Position": {
+    "mean": 653.4409,
+    "std": 0.1152,
+    "p01": 653.41,
+    "p99": 653.46,
+    "sigma2_lo": 653.2105,
+    "sigma2_hi": 653.6713,
+    "sigma3_lo": 653.0952,
+    "sigma3_hi": 653.7865
+  },
+  "Plasticizing_Position": {
+    "mean": 68.3801,
+    "std": 0.6496,
+    "p01": 68.24,
+    "p99": 68.85,
+    "sigma2_lo": 67.0809,
+    "sigma2_hi": 69.6794,
+    "sigma3_lo": 66.4313,
+    "sigma3_hi": 70.329
+  },
+  "Clamp_Open_Position": {
+    "mean": 644.881,
+    "std": 42.2894,
+    "p01": 647.99,
+    "p99": 647.99,
+    "sigma2_lo": 560.3023,
+    "sigma2_hi": 729.4598,
+    "sigma3_lo": 518.0129,
+    "sigma3_hi": 771.7492
+  },
+  "Max_Injection_Speed": {
+    "mean": 55.5459,
+    "std": 0.8163,
+    "p01": 54.7,
+    "p99": 56.4,
+    "sigma2_lo": 53.9134,
+    "sigma2_hi": 57.1785,
+    "sigma3_lo": 53.0971,
+    "sigma3_hi": 57.9947
+  },
+  "Max_Screw_RPM": {
+    "mean": 30.6743,
+    "std": 0.1408,
+    "p01": 30.4,
+    "p99": 31.0,
+    "sigma2_lo": 30.3928,
+    "sigma2_hi": 30.9559,
+    "sigma3_lo": 30.252,
+    "sigma3_hi": 31.0967
+  },
+  "Average_Screw_RPM": {
+    "mean": 124.6906,
+    "std": 126.576,
+    "p01": 29.2,
+    "p99": 292.6,
+    "sigma2_lo": -128.4614,
+    "sigma2_hi": 377.8426,
+    "sigma3_lo": -255.0374,
+    "sigma3_hi": 504.4186
+  },
+  "Max_Injection_Pressure": {
+    "mean": 142.0842,
+    "std": 1.9837,
+    "p01": 141.6,
+    "p99": 142.2,
+    "sigma2_lo": 138.1167,
+    "sigma2_hi": 146.0517,
+    "sigma3_lo": 136.133,
+    "sigma3_hi": 148.0354
+  },
+  "Max_Switch_Over_Pressure": {
+    "mean": 136.5018,
+    "std": 0.6695,
+    "p01": 135.7,
+    "p99": 137.3,
+    "sigma2_lo": 135.1628,
+    "sigma2_hi": 137.8408,
+    "sigma3_lo": 134.4934,
+    "sigma3_hi": 138.5103
+  },
+  "Max_Back_Pressure": {
+    "mean": 37.8119,
+    "std": 1.5265,
+    "p01": 36.8,
+    "p99": 38.7,
+    "sigma2_lo": 34.759,
+    "sigma2_hi": 40.8648,
+    "sigma3_lo": 33.2325,
+    "sigma3_hi": 42.3912
+  },
+  "Average_Back_Pressure": {
+    "mean": 59.3235,
+    "std": 3.4684,
+    "p01": 59.0,
+    "p99": 60.1,
+    "sigma2_lo": 52.3867,
+    "sigma2_hi": 66.2602,
+    "sigma3_lo": 48.9183,
+    "sigma3_hi": 69.7286
+  },
+  "Barrel_Temperature_1": {
+    "mean": 275.9643,
+    "std": 2.3084,
+    "p01": 274.9,
+    "p99": 277.2,
+    "sigma2_lo": 271.3474,
+    "sigma2_hi": 280.5812,
+    "sigma3_lo": 269.039,
+    "sigma3_hi": 282.8896
+  },
+  "Barrel_Temperature_2": {
+    "mean": 275.1346,
+    "std": 1.8926,
+    "p01": 274.3,
+    "p99": 276.1,
+    "sigma2_lo": 271.3495,
+    "sigma2_hi": 278.9197,
+    "sigma3_lo": 269.4569,
+    "sigma3_hi": 280.8123
+  },
+  "Barrel_Temperature_3": {
+    "mean": 274.8562,
+    "std": 1.8592,
+    "p01": 274.2,
+    "p99": 275.7,
+    "sigma2_lo": 271.1378,
+    "sigma2_hi": 278.5747,
+    "sigma3_lo": 269.2786,
+    "sigma3_hi": 280.4339
+  },
+  "Barrel_Temperature_4": {
+    "mean": 270.2837,
+    "std": 2.0223,
+    "p01": 268.8,
+    "p99": 271.9,
+    "sigma2_lo": 266.2391,
+    "sigma2_hi": 274.3283,
+    "sigma3_lo": 264.2168,
+    "sigma3_hi": 276.3507
+  },
+  "Barrel_Temperature_5": {
+    "mean": 254.923,
+    "std": 1.1374,
+    "p01": 254.1,
+    "p99": 255.9,
+    "sigma2_lo": 252.6483,
+    "sigma2_hi": 257.1978,
+    "sigma3_lo": 251.5109,
+    "sigma3_hi": 258.3351
+  },
+  "Barrel_Temperature_6": {
+    "mean": 229.9721,
+    "std": 0.4294,
+    "p01": 229.4,
+    "p99": 230.5,
+    "sigma2_lo": 229.1133,
+    "sigma2_hi": 230.8308,
+    "sigma3_lo": 228.6839,
+    "sigma3_hi": 231.2602
+  },
+  "Hopper_Temperature": {
+    "mean": 66.6684,
+    "std": 2.4369,
+    "p01": 64.0,
+    "p99": 69.7,
+    "sigma2_lo": 61.7945,
+    "sigma2_hi": 71.5422,
+    "sigma3_lo": 59.3576,
+    "sigma3_hi": 73.9791
+  },
+  "Mold_Temperature_3": {
+    "mean": 22.0711,
+    "std": 1.162,
+    "p01": 19.7,
+    "p99": 25.1,
+    "sigma2_lo": 19.7471,
+    "sigma2_hi": 24.3951,
+    "sigma3_lo": 18.5851,
+    "sigma3_hi": 25.5571
+  },
+  "Mold_Temperature_4": {
+    "mean": 23.4677,
+    "std": 1.3554,
+    "p01": 20.8,
+    "p99": 27.7,
+    "sigma2_lo": 20.7569,
+    "sigma2_hi": 26.1785,
+    "sigma3_lo": 19.4015,
+    "sigma3_hi": 27.5339
+  }
+}

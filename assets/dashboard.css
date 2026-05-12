@@ -1,0 +1,369 @@
+/* ============================================================
+   SmartFactory XAI — Dashboard Styles
+   Single source of truth for all custom CSS.
+   Python injects design tokens via .format(**tokens).
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── 전역 ──────────────────────────────────────────────── */
+.stApp, body {{
+    background: {BG} !important;
+    color: {TEXT};
+    font-family: {FONT};
+}}
+[data-testid="block-container"] {{ padding-top: 0.8rem; padding-bottom: 2rem; }}
+
+/* ── 사이드바 표시 강제 ───────────────────────────────── */
+section[data-testid="stSidebar"] {{
+    background: {CARD};
+    border-right: 1px solid {BORDER};
+    display: block !important;
+    visibility: visible !important;
+}}
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"] {{
+    display: block !important;
+    visibility: visible !important;
+}}
+#MainMenu, footer, .stDeployButton {{ display: none !important; }}
+
+/* ── 상단 헤더 ────────────────────────────────────────── */
+.top-bar {{
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 13px 20px;
+    background: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 8px;
+    margin-bottom: 16px;
+}}
+.top-bar-title {{
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: {TEXT};
+    letter-spacing: -0.01em;
+}}
+.top-bar-sub {{ font-size: 0.7rem; color: {DIM}; margin-top: 2px; }}
+
+/* ── 사이드바 LIVE 영역 (좌측 텍스트 + 우측 끝 토글) ─── */
+.st-key-live_toggle_row {{
+    margin-top: 4px;
+    margin-bottom: 12px;
+}}
+.st-key-live_toggle_row [data-testid="stHorizontalBlock"] {{
+    align-items: center;
+    gap: 6px;
+}}
+.st-key-live_toggle_row [data-testid="stToggle"] {{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 0;
+}}
+
+/* ── pill 배지 ────────────────────────────────────────── */
+.pill {{
+    padding: 3px 9px;
+    border-radius: 3px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    font-family: {MONO};
+    border: 1px solid {BORDER};
+    color: {DIM};
+    background: {CARD2};
+}}
+.pill-red {{
+    border-color: {RED_BD};
+    color: {RED};
+    background: {RED_BG};
+}}
+
+/* ── 섹션 라벨 ────────────────────────────────────────── */
+.sec-label {{
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: {MUTED};
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+    margin-bottom: 8px;
+    border-left: 2px solid {RED};
+    padding-left: 7px;
+}}
+
+/* ── LIVE 자동 갱신 영역 ─────────────────────────────── */
+.live-zone {{
+    border-left: 3px solid {RED};
+    padding: 8px 12px 4px 14px;
+    margin: 8px 0;
+    background: rgba(212,33,33,0.03);
+    border-radius: 0 4px 4px 0;
+}}
+.live-zone-badge {{
+    display: inline-block;
+    background: {RED};
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+    letter-spacing: 0.08em;
+    font-family: {MONO};
+}}
+
+/* ── 수동 전용 영역 (LIVE 시 흐려짐) ─────────────────── */
+.manual-zone {{
+    border-left: 3px solid {MUTED};
+    padding: 8px 12px 4px 14px;
+    margin: 8px 0;
+    background: rgba(255,255,255,0.015);
+    border-radius: 0 4px 4px 0;
+}}
+.manual-zone-live {{
+    opacity: 0.45;
+    pointer-events: auto;
+}}
+.manual-zone-badge {{
+    display: inline-block;
+    background: {MUTED};
+    color: {TEXT};
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+    letter-spacing: 0.08em;
+    font-family: {MONO};
+}}
+.manual-zone-live-warn {{
+    display: inline-block;
+    background: rgba(212,33,33,0.15);
+    color: {RED};
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-left: 6px;
+    letter-spacing: 0.05em;
+    border: 1px solid {RED};
+}}
+
+/* ── 카드·KPI ─────────────────────────────────────────── */
+.card {{
+    background: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 6px;
+    padding: 16px 18px;
+}}
+.kpi {{
+    background: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 6px;
+    padding: 13px 16px;
+}}
+.kpi-lbl {{
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: {MUTED};
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+}}
+.kpi-num {{
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: {TEXT};
+    font-family: {MONO};
+    line-height: 1.1;
+    margin-top: 2px;
+}}
+.kpi-sub {{ font-size: 0.68rem; color: {DIM}; margin-top: 3px; }}
+
+/* ── 상태 배너 ────────────────────────────────────────── */
+.banner {{
+    border-radius: 6px;
+    padding: 11px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.01em;
+}}
+.banner-ok {{
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: {TEXT};
+}}
+.banner-alert {{
+    background: {RED_BG};
+    border: 1px solid {RED_BD};
+    color: {RED};
+}}
+
+/* ── 구분선 ──────────────────────────────────────────── */
+.divider {{
+    border: none;
+    border-top: 1px solid {BORDER};
+    margin: 14px 0;
+}}
+
+/* ── Streamlit Metric ────────────────────────────────── */
+div[data-testid="metric-container"] {{
+    background: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 6px;
+    padding: 13px 16px;
+}}
+div[data-testid="metric-container"] label {{
+    color: {MUTED} !important;
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-family: {FONT} !important;
+}}
+div[data-testid="metric-container"] [data-testid="stMetricValue"] {{
+    color: {TEXT} !important;
+    font-size: 1.35rem !important;
+    font-weight: 700 !important;
+    font-family: {MONO} !important;
+}}
+div[data-testid="metric-container"] [data-testid="stMetricDelta"] {{
+    font-size: 0.68rem !important;
+    font-family: {FONT} !important;
+}}
+
+/* ── 탭 ──────────────────────────────────────────────── */
+button[data-baseweb="tab"] {{
+    background: transparent !important;
+    color: {DIM} !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    padding: 9px 18px !important;
+    border-radius: 0 !important;
+    border-bottom: 2px solid transparent !important;
+    transition: color 0.15s;
+}}
+button[data-baseweb="tab"][aria-selected="true"] {{
+    color: {TEXT} !important;
+    border-bottom: 2px solid {RED} !important;
+}}
+div[data-baseweb="tab-list"] {{
+    background: transparent !important;
+    border-bottom: 1px solid {BORDER} !important;
+    gap: 0 !important;
+}}
+div[data-baseweb="tab-panel"] {{ padding-top: 20px !important; }}
+
+/* ── Expander ────────────────────────────────────────── */
+details {{
+    background: {CARD2} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 6px !important;
+    margin-bottom: 6px;
+}}
+details summary {{
+    color: {DIM} !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    padding: 9px 13px !important;
+    cursor: pointer;
+}}
+details[open] summary {{ color: {TEXT} !important; }}
+
+/* ── 슬라이더·데이터프레임·버튼·셀렉트 ───────────────── */
+div[data-testid="stSlider"] label {{
+    color: {DIM} !important;
+    font-size: 0.74rem !important;
+}}
+div[data-testid="stDataFrame"] {{
+    border: 1px solid {BORDER};
+    border-radius: 6px;
+    overflow: hidden;
+}}
+div[data-testid="stButton"] button {{
+    background: {TEXT} !important;
+    color: {BG} !important;
+    border: none !important;
+    border-radius: 5px !important;
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
+    padding: 8px 22px !important;
+    letter-spacing: 0.01em;
+    transition: opacity 0.15s;
+}}
+div[data-testid="stButton"] button:hover {{ opacity: 0.85 !important; }}
+div[data-baseweb="select"] > div {{
+    background: {CARD2} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 5px !important;
+    color: {TEXT} !important;
+}}
+
+/* ── 시작 가이드 (랜딩) ──────────────────────────────── */
+.guide-hero {{ text-align: center; padding: 48px 24px 32px; }}
+.guide-hero-icon {{ font-size: 3rem; margin-bottom: 16px; }}
+.guide-hero-title {{
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: {TEXT};
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}}
+.guide-hero-sub {{
+    font-size: 0.9rem;
+    color: {DIM};
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.65;
+}}
+.guide-card {{
+    background: {CARD};
+    border: 1px solid {BORDER};
+    border-radius: 8px;
+    padding: 20px 22px;
+    height: 100%;
+}}
+.guide-card-num {{
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: {RED};
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+    font-family: {MONO};
+}}
+.guide-card-title {{
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: {TEXT};
+    margin-bottom: 6px;
+}}
+.guide-card-desc {{
+    font-size: 0.78rem;
+    color: {DIM};
+    line-height: 1.6;
+}}
+.guide-card-tag {{
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.63rem;
+    font-weight: 600;
+    color: {MUTED};
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border: 1px solid {BORDER};
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: {MONO};
+}}
+.guide-divider {{
+    border: none;
+    border-top: 1px solid {BORDER};
+    margin: 32px 0 24px;
+}}

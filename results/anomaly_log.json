@@ -1,0 +1,46 @@
+[
+  {
+    "time": "01:00:23",
+    "err": 1.22896,
+    "severity": "긴급 (CRITICAL)",
+    "top_sensor": "Mold Temperature 4",
+    "sigma": 4.0,
+    "mode": "균형",
+    "action": "미확인",
+    "operator": "",
+    "true_label": "미확인"
+  },
+  {
+    "time": "09:59:01",
+    "err": 0.63264,
+    "severity": "위험 (DANGER)",
+    "top_sensor": "Barrel Temperature 1",
+    "sigma": 3.9,
+    "mode": "균형",
+    "action": "미확인",
+    "operator": "",
+    "true_label": "미확인"
+  },
+  {
+    "time": "13:04:21",
+    "err": 0.37838,
+    "severity": "경고 (WARNING)",
+    "top_sensor": "Hopper Temperature",
+    "sigma": 3.3,
+    "mode": "균형",
+    "action": "미확인",
+    "operator": "",
+    "true_label": "미확인"
+  },
+  {
+    "time": "00:17:06",
+    "err": 0.03546,
+    "severity": "경고 (WARNING)",
+    "top_sensor": "Cushion Position",
+    "sigma": 1478.0,
+    "mode": "탐지",
+    "action": "미확인",
+    "operator": "",
+    "true_label": "미확인"
+  }
+]
