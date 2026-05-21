@@ -62,6 +62,11 @@ export default function TrustPage() {
     rows.sort((a, x) => (x.f1 ?? 0) - (a.f1 ?? 0));
   }
 
+  /* τ(임계값) 산출 — src/detector.py find_threshold():
+     · 배포 τ = (정상 복원오차 99%ile + F1최적 τ) / 2 = (0.1225 + 0.5171)/2 = 0.3198
+       (99%ile=라벨없이 정함 / F1최적=불량라벨 사용 → 둘의 평균이 운영 임계값. ct.f1_optimal_threshold 필드)
+     · 비용·F1 최적 τ = 0.5171 (ct.recommended.threshold) — FN50만/FP3만 비용 최소이자 실제 F1 최댓값
+     · 총비용 = 미탐(FN)×50만 + 거짓경보(FP)×3만. 0.3198→0.5171: FN 13 동일·FP 6→3 → 668→659만 */
   const costGain = (ct && m) ? ((ct.recommended.precision - m.precision) * 100) : null;
 
   return (
