@@ -142,7 +142,7 @@ export default function TrustPage() {
         <div className="card">
           <div className="h">
             <span className="ttl">합의 알고리즘 비교 · {rows.length || "—"}가지 (정직 공개)</span>
-            <span className="sub">Stacking·단독 베이스라인 포함 · F1 기준 정렬 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
+            <span className="sub">★ ≥3/4 권장 = 불량 1건 더 탐지(미탐 비용↓) + 한 모델 틀려도 견고 · F1 내림차순 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
           </div>
           <div className="b" style={{ padding: 0 }}>
             <table className="tbl">
@@ -167,23 +167,25 @@ export default function TrustPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div className="card">
-            <div className="h"><span className="ttl">Cost-Sensitive Threshold</span><span className="sub">불량 비용 ≫ FP 비용</span></div>
+            <div className="h"><span className="ttl">Cost-Sensitive Threshold</span><span className="sub">미탐(FN) 50만 ≫ 거짓경보(FP) 3만</span></div>
             <div className="b">
-              <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                 <div>
                   <div className="eyebrow">F1-OPT τ</div>
-                  <div className="num" style={{ fontSize: 24, fontWeight: 800, marginTop: 4 }}>{f4(ct?.f1_optimal_threshold)}</div>
+                  <div className="num" style={{ fontSize: 22, fontWeight: 800, marginTop: 2 }}>{f4(ct?.f1_optimal_threshold)}</div>
+                  <div style={{ fontSize: 10, color: "var(--sx-text-3)", fontWeight: 700, marginTop: 2 }}>거짓경보 {cm ? cm.fp : "—"}건 · {ct?.f1_optimal_cost_fn50_fp3 ?? "—"}만원</div>
                 </div>
-                <div style={{ color: "var(--sx-text-4)", fontSize: 14 }}>→</div>
-                <div>
+                <div style={{ color: "var(--sx-text-4)", fontSize: 14, paddingTop: 16 }}>→</div>
+                <div style={{ textAlign: "right" }}>
                   <div className="eyebrow" style={{ color: "var(--sx-cyan)" }}>COST-OPT τ</div>
-                  <div className="num" style={{ fontSize: 24, fontWeight: 800, color: "var(--sx-cyan)", marginTop: 4 }}>{f4(ct?.recommended?.threshold)}</div>
+                  <div className="num" style={{ fontSize: 22, fontWeight: 800, color: "var(--sx-cyan)", marginTop: 2 }}>{f4(ct?.recommended?.threshold)}</div>
+                  <div style={{ fontSize: 10, color: "var(--sx-cyan)", fontWeight: 700, marginTop: 2 }}>거짓경보 {ct?.recommended?.fp ?? "—"}건 · {ct?.recommended?.total_cost_man ?? "—"}만원</div>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: "var(--sx-text-2)", fontWeight: 600, marginTop: 14, lineHeight: 1.55 }}>
-                비용 가중 τ 적용 시 Precision <span className="num" style={{ color: "var(--sx-cyan)" }}>{costGain !== null ? (costGain >= 0 ? "+" : "") + costGain.toFixed(1) + " %p" : "—"}</span> 상승 ({f3(m?.precision)} → {f3(ct?.recommended?.precision)}). 총 비용 <span className="num">{ct?.recommended?.total_cost_man ?? "—"}만원</span>.
-                <span className="tag assume" style={{ marginLeft: 6 }}>가정 — 사내 비용 모델</span>
+              <div style={{ marginTop: 10, padding: "7px 9px", background: "var(--sx-cyan-bg)", border: "1px solid var(--sx-cyan-bd)", fontSize: 11, fontWeight: 700, color: "var(--sx-text-2)", lineHeight: 1.5 }}>
+                임계값 ↑ → 거짓경보 <span className="num" style={{ color: "var(--sx-red-soft)" }}>{cm ? cm.fp : "—"}→{ct?.recommended?.fp ?? "—"}건</span> (절반) · Precision <span className="num" style={{ color: "var(--sx-cyan)" }}>+{costGain !== null ? costGain.toFixed(1) : "—"}%p</span> · 총비용 <span className="num">{ct?.f1_optimal_cost_fn50_fp3 ?? "—"}→{ct?.recommended?.total_cost_man ?? "—"}만원</span>
               </div>
+              <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 6 }}>불량 미탐을 못 놓치는 라인이라, 거짓경보를 줄여 총비용·정밀도를 동시에 개선 <span className="tag assume" style={{ marginLeft: 4 }}>가정</span></div>
             </div>
           </div>
 
