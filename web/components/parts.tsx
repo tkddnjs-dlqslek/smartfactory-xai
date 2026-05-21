@@ -1,9 +1,8 @@
 "use client";
 /* SmartFactory XAI — shared chart and shell parts (mission-control aesthetic)
    원본: _design_package/smart-factory-mvp/project/design-parts.jsx */
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import { liveStore } from "@/lib/live";
 
 /* ───── 5탭 → 라우트 매핑 ───── */
 export const TAB_ROUTES: Record<number, string> = {
@@ -163,8 +162,6 @@ export function Annot({ value, unit, tag = "real", size = 14, color }: any) {
 
 /* ───── topbar for dashboard ───── */
 export function TopBar({ width = 1440 }: any) {
-  const [live, setLive] = useState(false);
-  useEffect(() => liveStore.subscribe(setLive), []);
   return (
     <div style={{
       height: 56, padding: "0 24px", background: "var(--sx-bg-2)",
@@ -183,25 +180,13 @@ export function TopBar({ width = 1440 }: any) {
           <div style={{fontSize:9, color:"var(--sx-text-3)", fontWeight:700, letterSpacing:0.6, textTransform:"uppercase"}}>통합 운영 플랫폼 · 품질·설비·안전·생산</div>
         </div>
       </div>
-      <div style={{width:1, height:28, background:"var(--sx-border)"}}></div>
-      <div className="pill"><span style={{color:"var(--sx-text-3)"}}>설비</span><span className="v">IM-7</span></div>
-      <div className="pill cy"><span style={{color:"var(--sx-cyan)"}}>운영모드</span><span className="v">균형</span></div>
-      <div className="pill"><span style={{color:"var(--sx-text-3)"}}>τ</span><span className="v num">0.184</span></div>
-      <div style={{marginLeft:"auto", display:"flex", gap:8, alignItems:"center"}}>
-        <div className="pill"><span style={{color:"var(--sx-text-3)"}}>OPC-UA</span><span className="v" style={{color:"var(--sx-cyan)"}}>● 연결</span></div>
-        <div className="pill"><span style={{color:"var(--sx-text-3)"}}>Slack</span><span className="v">#prod-alerts</span></div>
-        <div className="pill live" onClick={() => liveStore.toggle()} style={{cursor:"pointer", opacity: live ? 1 : 0.5}}>{live ? <><span className="pulse"></span> LIVE · 1 Hz</> : "○ LIVE 정지"}</div>
-        <div style={{width:28, height:28, borderRadius:0, border:"1px solid var(--sx-border-2)", display:"grid", placeItems:"center", fontSize:11, fontWeight:800, color:"var(--sx-text-2)"}}>김</div>
-      </div>
+      <div style={{width:28, height:28, marginLeft:"auto", borderRadius:0, border:"1px solid var(--sx-border-2)", display:"grid", placeItems:"center", fontSize:11, fontWeight:800, color:"var(--sx-text-2)"}}>김</div>
     </div>
   );
 }
 
 /* ───── sidebar 280 ───── */
 export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    "OPC-UA 스트림": true, "Slack 알람": true, "PDF 자동 리포트": false,
-  });
   const pillars = [
     { p: "품질 관리 / Quality", c: "var(--sx-red-soft)", tabs: [
       { i: 1, t: "실시간 진단",     sub: "Real-time" },
@@ -252,36 +237,6 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
             ))}
           </div>
         ))}
-      </div>
-
-      <div className="hair"></div>
-      <div style={{padding:"14px 18px"}}>
-        <div className="eyebrow" style={{marginBottom:8}}>외부 연동</div>
-        {[
-          { l:"OPC-UA 스트림",   v:"connected" },
-          { l:"Slack 알람",      v:"#prod-alerts" },
-          { l:"PDF 자동 리포트", v:"08:00 KST" },
-        ].map(t => {
-          const on = !!toggles[t.l];
-          const onClick = () => setToggles(p => ({ ...p, [t.l]: !p[t.l] }));
-          return (
-            <div key={t.l} onClick={onClick} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 0", fontSize:11, fontWeight:600, cursor:"pointer"}}>
-              <div>
-                <div style={{color:"var(--sx-text-2)"}}>{t.l}</div>
-                <div style={{fontSize:9, color:"var(--sx-text-4)", fontWeight:700, marginTop:1}}>{t.v}</div>
-              </div>
-              <div style={{
-                width:28, height:14, background: on ? "var(--sx-cyan)" : "var(--sx-surface-3)",
-                position:"relative", borderRadius:0, transition:"background 0.15s"
-              }}>
-                <div style={{
-                  position:"absolute", top:1, left: on ? 15 : 1, width: 12, height: 12,
-                  background: "#fff", transition:"left 0.15s"
-                }}></div>
-              </div>
-            </div>
-          );
-        })}
       </div>
 
       <div className="hair"></div>
