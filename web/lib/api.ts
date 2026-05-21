@@ -77,4 +77,6 @@ export const api = {
   health: () => get<{ status: string; threshold: number; sensors: number }>("/api/health"),
   metrics: () => get<MetricsBundle>("/api/metrics"),
   batch: () => get<BatchBundle>("/api/batch"),
+  pca: () => get<any>("/api/pca"),
+  causal: () => get<any>("/api/causal"),
 };

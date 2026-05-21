@@ -11,6 +11,7 @@ export default function CausePage() {
   const [cum, setCum] = useState<number | null>(null);
   const [recon, setRecon] = useState<number | null>(null);
   const [scName, setScName] = useState("긴급 #37");
+  const [pca, setPca] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,8 +27,25 @@ export default function CausePage() {
       } catch (e: any) {
         setErr(e.message || "SHAP 연결 실패");
       }
+      try { setPca(await api.pca()); } catch { /* PCA optional */ }
     })();
   }, []);
+
+  // 실측 PCA 좌표 → SVG 스케일 (정상 6697 서브샘플 + 불량 39 전체)
+  const pcaPts = (() => {
+    if (!pca?.normal_pc1) return null;
+    const allX = [...pca.normal_pc1, ...pca.defect_pc1];
+    const allY = [...pca.normal_pc2, ...pca.defect_pc2];
+    const xmin = Math.min(...allX), xmax = Math.max(...allX);
+    const ymin = Math.min(...allY), ymax = Math.max(...allY);
+    const sx = (v: number) => 24 + ((v - xmin) / (xmax - xmin + 1e-9)) * 412;
+    const sy = (v: number) => 196 - ((v - ymin) / (ymax - ymin + 1e-9)) * 184;
+    const step = Math.ceil(pca.normal_pc1.length / 280);
+    const normal: [number, number][] = [];
+    for (let i = 0; i < pca.normal_pc1.length; i += step) normal.push([sx(pca.normal_pc1[i]), sy(pca.normal_pc2[i])]);
+    const defect: [number, number][] = pca.defect_pc1.map((v: number, i: number) => [sx(v), sy(pca.defect_pc2[i])]);
+    return { normal, defect, ev: pca.explained_var };
+  })();
 
   const maxAbs = top.length ? Math.max(...top.map(t => t.abs_shap)) : 1;
   // 워터폴: 실측 SHAP 기여를 baseline→prediction 누적. baseline = 예측 - Σ(top shap)
@@ -136,22 +154,21 @@ export default function CausePage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">PCA 클러스터 · 정상 vs 이상</span><span className="sub">현재 샷 표시</span></div>
+          <div className="h"><span className="ttl">PCA 클러스터 · 정상 vs 이상</span><span className="sub">{pcaPts ? `설명분산 ${(pcaPts.ev[0] * 100).toFixed(0)}%+${(pcaPts.ev[1] * 100).toFixed(0)}%` : "로딩"} <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span></div>
           <div className="b">
             <svg viewBox="0 0 460 220" style={{ width: "100%", height: 220, display: "block" }}>
               <line x1="20" y1="200" x2="440" y2="200" stroke="var(--sx-border)" strokeWidth="0.5" />
               <line x1="20" y1="10" x2="20" y2="200" stroke="var(--sx-border)" strokeWidth="0.5" />
-              {NORMAL_PTS.map((p, i) => (
-                <circle key={"n" + i} cx={p.x} cy={p.y} r="1.4" fill="#C8C8CD" opacity="0.5" />
+              {pcaPts?.normal.map((p, i) => (
+                <circle key={"n" + i} cx={p[0]} cy={p[1]} r="1.3" fill="#C8C8CD" opacity="0.45" />
               ))}
-              {ANOM_PTS.map((p, i) => (
-                <circle key={"a" + i} cx={p.x} cy={p.y} r="2" fill="#D42121" opacity="0.85" />
+              {pcaPts?.defect.map((p, i) => (
+                <circle key={"a" + i} cx={p[0]} cy={p[1]} r="2.2" fill="#D42121" opacity="0.85" />
               ))}
-              <circle cx="378" cy="68" r="6" fill="none" stroke="#fff" strokeWidth="1.4" />
-              <line x1="378" y1="62" x2="378" y2="36" stroke="#fff" strokeWidth="0.7" strokeDasharray="2 2" />
-              <text x="378" y="32" fill="#fff" fontSize="9" fontWeight="800" textAnchor="middle">#1,248</text>
-              <text x="100" y="26" fill="#C8C8CD" fontSize="10" fontWeight="700">정상 cluster · n=1,340</text>
-              <text x="330" y="180" fill="#FF5A4A" fontSize="10" fontWeight="700">이상 cluster · n=39</text>
+              <text x="440" y="14" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="end">PC1 →</text>
+              <text x="100" y="26" fill="#C8C8CD" fontSize="10" fontWeight="700">정상 n={pca?.n_normal ?? "—"}</text>
+              <text x="300" y="26" fill="#FF5A4A" fontSize="10" fontWeight="700">이상 n={pca?.n_defect ?? "—"}</text>
+              {!pcaPts && <text x="230" y="110" fill="var(--sx-text-3)" fontSize="10" fontWeight="700" textAnchor="middle">PCA 로딩 중…</text>}
             </svg>
           </div>
         </div>
@@ -159,20 +176,3 @@ export default function CausePage() {
     </DashShell>
   );
 }
-
-/* PCA 산점도 — SSR/CSR 하이드레이션 불일치 방지를 위해 고정 시드 좌표 사용 */
-const mulberry32 = (seed: number) => () => {
-  seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
-const _r = mulberry32(1248);
-const NORMAL_PTS = Array.from({ length: 180 }, () => ({
-  x: 140 + (_r() - 0.5) * 130,
-  y: 100 + (_r() - 0.5) * 80,
-}));
-const ANOM_PTS = Array.from({ length: 28 }, () => ({
-  x: 360 + (_r() - 0.5) * 70,
-  y: 60 + (_r() - 0.5) * 60,
-}));
