@@ -8,7 +8,7 @@ import { DashShell } from "@/components/parts";
 export default function HistoryPage() {
   return (
     <DashShell activeTab={4} scenario="정상"
-      headline="생산 이력 · RUL 예측 정비"
+      headline="설비 예지정비 · RUL 예측"
       sub="누적 이상 카운트 외삽 · 3단계 임계 (경고 / 위험 / 긴급) · 마지막 정비 D-31">
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>

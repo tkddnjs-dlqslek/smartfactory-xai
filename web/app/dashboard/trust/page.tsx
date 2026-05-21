@@ -43,7 +43,7 @@ export default function TrustPage() {
   const costGain = (ct && m) ? ((ct.recommended.precision - m.precision) * 100) : null;
 
   return (
-    <DashShell activeTab={5} scenario="정상"
+    <DashShell activeTab={7} scenario="정상"
       headline="모델 신뢰도 확인 · 학술 검증"
       sub={`ROC + PR + Confusion Matrix + 합의 비교 · Bootstrap n=1000 신뢰구간${err ? " · ⚠ 백엔드 미연결" : ""}`}>
 

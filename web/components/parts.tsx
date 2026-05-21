@@ -10,7 +10,9 @@ export const TAB_ROUTES: Record<number, string> = {
   2: "/dashboard/cause",
   3: "/dashboard/batch",
   4: "/dashboard/history",
-  5: "/dashboard/trust",
+  5: "/dashboard/safety",
+  6: "/dashboard/production",
+  7: "/dashboard/trust",
 };
 
 /* ───── 4-AI Consensus Meter ───── */
@@ -175,7 +177,7 @@ export function TopBar({ width = 1440 }: any) {
         </div>
         <div>
           <div style={{fontSize:13, fontWeight:800, letterSpacing:0.3}}>SmartFactory XAI</div>
-          <div style={{fontSize:9, color:"var(--sx-text-3)", fontWeight:700, letterSpacing:0.6, textTransform:"uppercase"}}>4-AI Consensus · v2.3</div>
+          <div style={{fontSize:9, color:"var(--sx-text-3)", fontWeight:700, letterSpacing:0.6, textTransform:"uppercase"}}>통합 운영 플랫폼 · 품질·설비·안전·생산</div>
         </div>
       </div>
       <div style={{width:1, height:28, background:"var(--sx-border)"}}></div>
@@ -194,12 +196,24 @@ export function TopBar({ width = 1440 }: any) {
 
 /* ───── sidebar 280 ───── */
 export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
-  const tabs = [
-    { i: 1, t: "실시간 진단",       sub: "Real-time" },
-    { i: 2, t: "불량 원인 분석",     sub: "SHAP" },
-    { i: 3, t: "전체 이력 분석",     sub: "Batch" },
-    { i: 4, t: "생산 이력 · RUL",   sub: "History" },
-    { i: 5, t: "모델 신뢰도 확인",   sub: "Model trust" },
+  const pillars = [
+    { p: "품질 관리 / Quality", c: "var(--sx-red-soft)", tabs: [
+      { i: 1, t: "실시간 진단",     sub: "Real-time" },
+      { i: 2, t: "불량 원인 분석",   sub: "SHAP" },
+      { i: 3, t: "전체 이력 분석",   sub: "Batch" },
+    ]},
+    { p: "설비 관리 / Equipment", c: "var(--sx-cyan)", tabs: [
+      { i: 4, t: "설비 예지정비 · RUL", sub: "Predictive" },
+    ]},
+    { p: "안전 관리 / Safety", c: "#FFA756", tabs: [
+      { i: 5, t: "안전 위험 모니터링", sub: "Safety" },
+    ]},
+    { p: "생산 관리 / Production", c: "var(--sx-cyan)", tabs: [
+      { i: 6, t: "생산 현황 · OEE",   sub: "Production" },
+    ]},
+    { p: "AI 신뢰도 / Trust", c: "var(--sx-text-3)", tabs: [
+      { i: 7, t: "모델 신뢰도 확인",   sub: "Model trust" },
+    ]},
   ];
   return (
     <div style={{
@@ -208,25 +222,29 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
       display:"flex", flexDirection:"column", flexShrink:0
     }}>
       <div style={{padding:"16px 18px 12px"}}>
-        <div className="eyebrow">설비 / Equipment</div>
+        <div className="eyebrow">통합 운영 플랫폼 / Platform</div>
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:6}}>
-          <div style={{fontSize:14, fontWeight:800}}>IM-7 사출성형기</div>
+          <div style={{fontSize:14, fontWeight:800}}>IM-7 사출성형 라인</div>
           <span className="tag cyan">활성</span>
         </div>
-        <div style={{fontSize:10, color:"var(--sx-text-3)", fontWeight:600, marginTop:3}}>KAMP 데이터셋 · 1,379 shots <span className="tag real" style={{marginLeft:4}}>실측</span></div>
+        <div style={{fontSize:10, color:"var(--sx-text-3)", fontWeight:600, marginTop:3}}>품질·설비·안전·생산 통합 · KAMP 1,379 shots <span className="tag real" style={{marginLeft:4}}>실측</span></div>
       </div>
 
       <div className="hair"></div>
-      <div style={{padding:"12px 0"}}>
-        <div className="eyebrow" style={{padding:"4px 18px 8px"}}>대시보드</div>
-        {tabs.map(t => (
-          <Link key={t.i} href={TAB_ROUTES[t.i]} className={"sidebar-row" + (t.i === active ? " active" : "")} style={{textDecoration:"none", color:"inherit"}}>
-            <span className="n mono">{t.i.toString().padStart(2,"0")}</span>
-            <div style={{display:"flex", flexDirection:"column", gap:1}}>
-              <span>{t.t}</span>
-              <span style={{fontSize:9, color:"var(--sx-text-4)", letterSpacing:0.5, textTransform:"uppercase", fontWeight:700}}>{t.sub}</span>
-            </div>
-          </Link>
+      <div style={{padding:"10px 0"}}>
+        {pillars.map(pl => (
+          <div key={pl.p} style={{marginBottom:6}}>
+            <div className="eyebrow" style={{padding:"6px 18px 4px", color:pl.c}}>{pl.p}</div>
+            {pl.tabs.map(t => (
+              <Link key={t.i} href={TAB_ROUTES[t.i]} className={"sidebar-row" + (t.i === active ? " active" : "")} style={{textDecoration:"none", color:"inherit"}}>
+                <span className="n mono">{t.i.toString().padStart(2,"0")}</span>
+                <div style={{display:"flex", flexDirection:"column", gap:1}}>
+                  <span>{t.t}</span>
+                  <span style={{fontSize:9, color:"var(--sx-text-4)", letterSpacing:0.5, textTransform:"uppercase", fontWeight:700}}>{t.sub}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         ))}
       </div>
 
@@ -302,14 +320,16 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
   );
 }
 
-/* ───── 5-tab bar ───── */
+/* ───── tab bar ───── */
 export function TabBar({ active = 1 }: any) {
   const tabs = [
     { i:1, l:"실시간 진단" },
     { i:2, l:"불량 원인 분석" },
-    { i:3, l:"전체 이력 일괄 분석" },
-    { i:4, l:"생산 이력 · RUL" },
-    { i:5, l:"모델 신뢰도 확인" },
+    { i:3, l:"전체 이력 분석" },
+    { i:4, l:"설비 예지정비" },
+    { i:5, l:"안전 모니터링" },
+    { i:6, l:"생산 · OEE" },
+    { i:7, l:"모델 신뢰도" },
   ];
   return (
     <div className="tabs">
