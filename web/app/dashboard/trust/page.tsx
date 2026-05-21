@@ -11,11 +11,33 @@ const f4 = (x: any, d = "—") => (typeof x === "number" ? x.toFixed(4) : d);
 
 export default function TrustPage() {
   const [b, setB] = useState<MetricsBundle | null>(null);
+  const [val, setVal] = useState<{ errors: number[]; labels: number[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     api.metrics().then(setB).catch((e) => setErr(e.message || "지표 연결 실패"));
+    api.validation().then(setVal).catch(() => {});
   }, []);
+
+  // 실측 ROC / PR 곡선 점 (val_scores 1,379샷 → AUC 0.9254/0.7080 재현)
+  const curves = React.useMemo(() => {
+    if (!val) return null;
+    const pairs = val.errors.map((e, i) => [e, val.labels[i]] as [number, number]).sort((a, x) => x[0] - a[0]);
+    const P = val.labels.reduce((s, l) => s + l, 0), N = val.labels.length - P;
+    let tp = 0, fp = 0;
+    const roc: [number, number][] = [[0, 0]], pr: [number, number][] = [];
+    for (const [, y] of pairs) {
+      if (y === 1) tp++; else fp++;
+      roc.push([fp / N, tp / P]);
+      pr.push([tp / P, tp / (tp + fp)]);
+    }
+    const ds = (a: [number, number][]) => { const step = Math.max(1, Math.floor(a.length / 120)); return a.filter((_, i) => i % step === 0 || i === a.length - 1); };
+    const pts = (a: [number, number][], fx: (v: number) => number, fy: (v: number) => number) => ds(a).map(([u, v]) => `${fx(u).toFixed(1)},${fy(v).toFixed(1)}`).join(" ");
+    return {
+      roc: pts(roc, (f) => 30 + f * 230, (t) => 220 - t * 200),
+      pr: pts(pr, (r) => 30 + r * 230, (p) => 220 - p * 200),
+    };
+  }, [val]);
 
   const m = b?.metrics;
   const cm = b?.ensemble?.ae_alone;  // AE 기준 혼동행렬 (헤드라인 지표와 일치)
@@ -63,9 +85,9 @@ export default function TrustPage() {
               <line x1="30" y1="220" x2="260" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.6" />
               <line x1="30" y1="20" x2="30" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.6" />
               <line x1="30" y1="220" x2="260" y2="20" stroke="var(--sx-border)" strokeWidth="0.5" strokeDasharray="2 2" />
-              <path d="M 30 220 Q 40 160, 60 100 Q 100 40, 260 20 L 260 220 Z" fill="var(--sx-cyan-bg)" />
-              <path d="M 30 220 Q 40 160, 60 100 Q 100 40, 260 20" stroke="var(--sx-cyan)" strokeWidth="1.8" fill="none" />
-              <text x="150" y="120" fill="var(--sx-cyan)" fontSize="18" fontWeight="800" fontFamily="ui-monospace">{f4(m?.roc_auc)}</text>
+              {curves && <polygon points={`30,220 ${curves.roc} 260,220`} fill="var(--sx-cyan-bg)" />}
+              {curves && <polyline points={curves.roc} stroke="var(--sx-cyan)" strokeWidth="1.6" fill="none" />}
+              <text x="155" y="125" fill="var(--sx-cyan)" fontSize="17" fontWeight="800" fontFamily="ui-monospace">{f4(m?.roc_auc)}</text>
               <text x="145" y="234" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle">FPR</text>
               <text x="14" y="120" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle" transform="rotate(-90 14 120)">TPR</text>
             </svg>
@@ -78,8 +100,8 @@ export default function TrustPage() {
             <svg viewBox="0 0 280 240" style={{ width: "100%", height: 240, display: "block" }}>
               <line x1="30" y1="220" x2="260" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.6" />
               <line x1="30" y1="20" x2="30" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.6" />
-              <path d="M 30 30 L 70 36 Q 130 60, 180 130 Q 220 180, 260 218" stroke="var(--sx-cyan-soft)" strokeWidth="1.8" fill="none" />
-              <text x="100" y="100" fill="var(--sx-cyan-soft)" fontSize="18" fontWeight="800" fontFamily="ui-monospace">{f4(m?.pr_auc)}</text>
+              {curves && <polyline points={curves.pr} stroke="var(--sx-cyan-soft)" strokeWidth="1.6" fill="none" />}
+              <text x="120" y="60" fill="var(--sx-cyan-soft)" fontSize="17" fontWeight="800" fontFamily="ui-monospace">{f4(m?.pr_auc)}</text>
               <text x="145" y="234" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle">Recall</text>
               <text x="14" y="120" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle" transform="rotate(-90 14 120)">Precision</text>
             </svg>
