@@ -88,23 +88,29 @@ export default function BatchPage() {
         <div className="b">
           <svg viewBox="0 0 1300 200" preserveAspectRatio="none" style={{ width: "100%", height: 200, display: "block" }}>
             {vs && (() => {
-              const lo = vs.err_min, hi = vs.err_max, rng = (hi - lo) || 1;
-              const yOf = (e: number) => 190 - ((e - lo) / rng) * 180;
+              // 로그 스케일 — 복원오차가 heavy-tail(0.005~160)이라 선형이면 98%가 바닥에 깔림
+              const lo = Math.max(1e-3, vs.err_min), hi = vs.err_max;
+              const lL = Math.log10(lo), lH = Math.log10(hi), rng = (lH - lL) || 1;
+              const yOf = (e: number) => 190 - ((Math.log10(Math.min(hi, Math.max(lo, e))) - lL) / rng) * 178;
               const tY = yOf(tau);
               return (
                 <>
-                  <line x1="0" y1={tY} x2="1300" y2={tY} stroke="var(--sx-red)" strokeWidth="0.8" strokeDasharray="3 2" />
-                  <text x="1295" y={tY - 4} fill="var(--sx-red-soft)" fontSize="9" fontWeight="700" textAnchor="end">τ {tau.toFixed(3)}</text>
+                  {[0.01, 0.1, 1].map((g) => g >= lo && g <= hi ? (
+                    <g key={g}><line x1="0" y1={yOf(g)} x2="1300" y2={yOf(g)} stroke="var(--sx-border)" strokeWidth="0.4" /><text x="4" y={yOf(g) - 2} fill="var(--sx-text-4)" fontSize="8" fontWeight="600">{g}</text></g>
+                  ) : null)}
+                  <line x1="0" y1={tY} x2="1300" y2={tY} stroke="var(--sx-red)" strokeWidth="1" strokeDasharray="4 2" />
+                  <text x="1295" y={tY - 4} fill="var(--sx-red-soft)" fontSize="10" fontWeight="800" textAnchor="end">τ {tau.toFixed(3)}</text>
                   {vs.errors.map((e, i) => {
                     const over = e >= tau, defect = vs.labels[i] === 1;
-                    return <circle key={i} cx={(i / vs.errors.length) * 1300} cy={yOf(e)} r={defect ? 2.2 : 0.8}
-                      fill={defect ? "var(--sx-red)" : (over ? "#FFA756" : "var(--sx-text-3)")} opacity={defect ? 0.95 : (over ? 0.7 : 0.45)} />;
+                    return <circle key={i} cx={(i / vs.errors.length) * 1300} cy={yOf(e)} r={defect ? 2.4 : 0.8}
+                      fill={defect ? "var(--sx-red)" : (over ? "#FFA756" : "var(--sx-text-3)")} opacity={defect ? 0.95 : (over ? 0.7 : 0.4)} />;
                   })}
                 </>
               );
             })()}
             {!vs && <text x="650" y="100" fill="var(--sx-text-3)" fontSize="12" textAnchor="middle">시뮬레이션 데이터 로딩…</text>}
           </svg>
+          <div style={{ fontSize: 9, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 2 }}>y축 = 복원오차(로그) · x축 = 검증샷 순서</div>
           <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 14 }}>
             <span className="eyebrow">임계값 τ</span>
             <input type="range" min={vs ? vs.err_min : 0.1} max={vs ? vs.err_max : 0.9} step={0.005} value={tau}

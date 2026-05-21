@@ -149,9 +149,9 @@ export default function CausePage() {
                       </g>
                     );
                   })}
-                  {/* 예측 종점 마커 (값은 카드 헤더에 표시) */}
+                  {/* 예측 종점 마커 — 마지막 막대 오른쪽 빈 공간 */}
                   <circle cx={x0 + (top.length - 1) * gap + bw} cy={yOf(pred)} r="3.5" fill="var(--sx-red)" />
-                  <text x={x0 + (top.length - 1) * gap + bw} y={yOf(pred) < TOP + 20 ? yOf(pred) + 16 : yOf(pred) - 8} fill="var(--sx-red-soft)" fontSize="8.5" fontWeight="800" textAnchor="middle">예측</text>
+                  <text x={x0 + (top.length - 1) * gap + bw + 8} y={yOf(pred) + 3} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="start">예측 {pred.toFixed(3)}</text>
                 </>);
               })()}
               {(!top.length || recon === null) && <text x="230" y="120" fill="var(--sx-text-3)" fontSize="11" textAnchor="middle">계산 중…</text>}
@@ -204,25 +204,26 @@ export default function CausePage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">PCA 클러스터 · 정상 vs 이상</span><span className="sub">{pcaPts ? `설명분산 ${(pcaPts.ev[0] * 100).toFixed(0)}%+${(pcaPts.ev[1] * 100).toFixed(0)}%` : "로딩"}</span></div>
+          <div className="h"><span className="ttl">PCA 클러스터 · 정상 vs 이상</span><span className="sub">24센서 → 2축 압축 · 분산 {pcaPts ? ((pcaPts.ev[0] + pcaPts.ev[1]) * 100).toFixed(0) : "—"}% 보존</span></div>
           <div className="b">
-            <svg viewBox="0 0 460 224" style={{ width: "100%", height: 224, display: "block" }}>
-              <line x1="40" y1="196" x2="436" y2="196" stroke="var(--sx-border-2)" strokeWidth="0.6" />
-              <line x1="40" y1="16" x2="40" y2="196" stroke="var(--sx-border-2)" strokeWidth="0.6" />
+            <svg viewBox="0 0 460 214" style={{ width: "100%", height: 200, display: "block" }}>
+              <line x1="48" y1="190" x2="440" y2="190" stroke="var(--sx-border-2)" strokeWidth="0.6" />
+              <line x1="48" y1="14" x2="48" y2="190" stroke="var(--sx-border-2)" strokeWidth="0.6" />
               {pcaPts?.normal.map((p, i) => (
                 <circle key={"n" + i} cx={p[0]} cy={p[1]} r="1.4" fill="#C8C8CD" opacity="0.4" />
               ))}
               {pcaPts?.defect.map((p, i) => (
                 <circle key={"a" + i} cx={p[0]} cy={p[1]} r="3" fill="#D42121" opacity="0.9" stroke="#fff" strokeWidth="0.4" />
               ))}
-              <text x="436" y="212" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="end">PC1 ({pcaPts ? (pcaPts.ev[0] * 100).toFixed(0) : "—"}%) →</text>
-              <text x="14" y="106" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle" transform="rotate(-90 14 106)">PC2 ({pcaPts ? (pcaPts.ev[1] * 100).toFixed(0) : "—"}%) →</text>
-              {/* 범례 (좌상단 박스) */}
-              <rect x="48" y="22" width="146" height="34" fill="var(--sx-surface)" stroke="var(--sx-border)" strokeWidth="0.5" opacity="0.9" />
-              <circle cx="58" cy="33" r="3" fill="#C8C8CD" /><text x="66" y="36" fill="var(--sx-text-2)" fontSize="9" fontWeight="700">정상 n={pca?.n_normal ?? "—"}</text>
-              <circle cx="58" cy="47" r="3.5" fill="#D42121" stroke="#fff" strokeWidth="0.4" /><text x="66" y="50" fill="var(--sx-red-soft)" fontSize="9" fontWeight="700">이상(불량) n={pca?.n_defect ?? "—"}</text>
-              {!pcaPts && <text x="238" y="110" fill="var(--sx-text-3)" fontSize="10" fontWeight="700" textAnchor="middle">PCA 로딩 중…</text>}
+              <text x="440" y="206" fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700" textAnchor="end">PC1 · 공정 종합(위치·압력) {pcaPts ? (pcaPts.ev[0] * 100).toFixed(0) : "—"}% →</text>
+              <text x="12" y="102" fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700" textAnchor="middle" transform="rotate(-90 12 102)">PC2 · 금형온도 {pcaPts ? (pcaPts.ev[1] * 100).toFixed(0) : "—"}% →</text>
+              {!pcaPts && <text x="244" y="100" fill="var(--sx-text-3)" fontSize="10" fontWeight="700" textAnchor="middle">PCA 로딩 중…</text>}
             </svg>
+            <div style={{ display: "flex", gap: 16, fontSize: 10, fontWeight: 700, marginTop: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ color: "var(--sx-text-2)" }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#C8C8CD", marginRight: 5 }}></span>정상 n={pca?.n_normal ?? "—"}</span>
+              <span style={{ color: "var(--sx-red-soft)" }}><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: "#D42121", marginRight: 5 }}></span>이상(불량) n={pca?.n_defect ?? "—"}</span>
+              <span style={{ color: "var(--sx-text-4)", fontWeight: 600 }}>24센서를 분산 최대 2축으로 압축 — 이상(빨강)이 정상 군집 밖 외곽에 분포</span>
+            </div>
           </div>
         </div>
       </div>
