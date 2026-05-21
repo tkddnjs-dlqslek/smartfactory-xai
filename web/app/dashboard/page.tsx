@@ -5,7 +5,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { DashShell, Consensus, Gauge, SensorGrid } from "@/components/parts";
 import { api, scenarioStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
-import { liveStore } from "@/lib/live";
 
 const STATUS_KO: Record<string, string> = {
   NORMAL: "정상", WARNING: "경고", DANGER: "위험", CRITICAL: "긴급",
@@ -86,21 +85,28 @@ export default function DashboardPage() {
   const wfBefore = r?.recon_error ?? 0;
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
-  // ── LIVE 스트리밍 (1Hz 자동 재예측 + 결과 누적) ──
-  const [live, setLive] = useState(false);
+  // ── LIVE 스트리밍: 데모(시나리오+노이즈) | 실측 KAMP 리플레이 (상호 배타) ──
+  const [liveMode, setLiveMode] = useState<"off" | "demo" | "kamp">("off");
+  const live = liveMode !== "off";
   const [tick, setTick] = useState(0);
   const [liveLog, setLiveLog] = useState<{ t: string; status: string; recon: number; agree: number; sensor: string; sigma: string }[]>([]);
-  useEffect(() => liveStore.subscribe(setLive), []);
-  useEffect(() => { if (!live) { setTick(0); setLiveLog([]); } }, [live]);
+  const [shots, setShots] = useState<number[][] | null>(null);
+  const shotIdx = useRef(0);
+
+  useEffect(() => { if (liveMode === "off") { setTick(0); setLiveLog([]); } }, [liveMode]);
   useEffect(() => {
-    if (!live || !baseZ) return;
+    if (liveMode === "off") return;
+    if (liveMode === "demo" && !baseZ) return;
+    if (liveMode === "kamp" && !shots) return;
     const id = setInterval(async () => {
-      // 현재 시나리오 기준 미세 드리프트(±0.1σ)로 라이브 센서 피드 흉내
-      const drifted = baseZ.map((v) => v + (Math.random() - 0.5) * 0.2);
+      // 데모: 선택 시나리오 + 미세 노이즈 / KAMP: 실측 검증샷을 한 개씩 재생
+      const z = liveMode === "demo"
+        ? baseZ!.map((v) => v + (Math.random() - 0.5) * 0.2)
+        : shots![(shotIdx.current++) % shots!.length];
       try {
-        const res = await api.predict(drifted);
+        const res = await api.predict(z);
         setR(res); setTick((t) => t + 1);
-        if (res.severity >= 2) {
+        if (res.severity >= 1) {  // 경고·위험·긴급 모두 이상으로 기록
           const p0 = res.prescriptions[0];
           setLiveLog((prev) => [{
             t: new Date().toLocaleTimeString("ko-KR", { hour12: false }),
@@ -111,7 +117,14 @@ export default function DashboardPage() {
       } catch { /* keep last */ }
     }, 1000);
     return () => clearInterval(id);
-  }, [live, baseZ]);
+  }, [liveMode, baseZ, shots]);
+
+  async function startKamp() {
+    if (liveMode === "kamp") { setLiveMode("off"); return; }
+    if (!shots) { try { const d = await api.shots(); setShots(d.shots); } catch { return; } }
+    shotIdx.current = 0; setLiveMode("kamp");
+  }
+  function startDemo() { setLiveMode((m) => (m === "demo" ? "off" : "demo")); }
 
   // ── 자연어 진단 보고서 (Claude Haiku 라이브 · 작업자 톤 단일) ──
   const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);
@@ -159,14 +172,23 @@ export default function DashboardPage() {
           );
         })}
         {loading && <span style={{ fontSize: 11, color: "var(--sx-text-3)" }}>분석 중…</span>}
-        <button onClick={() => liveStore.toggle()} className="btn subtle"
+        <button onClick={startKamp} disabled={liveMode === "demo"} className="btn subtle"
           style={{
             marginLeft: "auto", padding: "6px 12px", fontSize: 11, fontWeight: 800,
-            border: "1px solid " + (live ? "var(--sx-red-bd)" : "var(--sx-border-2)"),
-            background: live ? "var(--sx-red-bg)" : "transparent",
-            color: live ? "var(--sx-red-soft)" : "var(--sx-text-2)",
-          }}>{live ? "■ LIVE 정지" : "▶ LIVE 스트리밍"}</button>
-        {live && <span className="pill live"><span className="pulse"></span> 1Hz 스트리밍 · {tick.toLocaleString()}샷 분석</span>}
+            opacity: liveMode === "demo" ? 0.4 : 1, cursor: liveMode === "demo" ? "not-allowed" : "pointer",
+            border: "1px solid " + (liveMode === "kamp" ? "var(--sx-cyan-bd)" : "var(--sx-border-2)"),
+            background: liveMode === "kamp" ? "var(--sx-cyan-bg)" : "transparent",
+            color: liveMode === "kamp" ? "var(--sx-cyan)" : "var(--sx-text-2)",
+          }}>{liveMode === "kamp" ? "■ 실측 KAMP 정지" : "▶ 실측 KAMP 스트림"}</button>
+        <button onClick={startDemo} disabled={liveMode === "kamp"} className="btn subtle"
+          style={{
+            padding: "6px 12px", fontSize: 11, fontWeight: 800,
+            opacity: liveMode === "kamp" ? 0.4 : 1, cursor: liveMode === "kamp" ? "not-allowed" : "pointer",
+            border: "1px solid " + (liveMode === "demo" ? "var(--sx-red-bd)" : "var(--sx-border-2)"),
+            background: liveMode === "demo" ? "var(--sx-red-bg)" : "transparent",
+            color: liveMode === "demo" ? "var(--sx-red-soft)" : "var(--sx-text-2)",
+          }}>{liveMode === "demo" ? "■ 데모 정지" : "▶ 데모 스트림"}</button>
+        {live && <span className="pill live"><span className="pulse"></span> {liveMode === "kamp" ? "실측 KAMP" : "데모"} · {tick.toLocaleString()}샷</span>}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>

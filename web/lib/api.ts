@@ -86,4 +86,5 @@ export const api = {
   pca: () => get<any>("/api/pca"),
   causal: () => get<any>("/api/causal"),
   validation: () => get<{ errors: number[]; labels: number[]; n: number; n_defect: number; err_min: number; err_max: number; note: string }>("/api/validation"),
+  shots: () => get<{ shots: number[][]; labels: number[]; n: number; n_defect: number }>("/api/shots"),
 };

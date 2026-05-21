@@ -187,6 +187,12 @@ def validation():
     return _load_json("val_scores.json") or {}
 
 
+@app.get("/api/shots")
+def shots():
+    # 실측 KAMP 리플레이용 — cn7 검증 1,379샷의 z-벡터(스케일 적용)
+    return _load_json("val_shots.json") or {}
+
+
 @app.get("/api/pca")
 def pca():
     return _load_json("pca_data.json") or {}
