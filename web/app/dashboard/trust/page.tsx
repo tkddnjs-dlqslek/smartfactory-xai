@@ -100,8 +100,9 @@ export default function TrustPage() {
             <svg viewBox="0 0 280 240" style={{ width: "100%", height: 240, display: "block" }}>
               <line x1="30" y1="220" x2="260" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.6" />
               <line x1="30" y1="20" x2="30" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.6" />
+              {curves && <polygon points={`30,220 ${curves.pr} 260,220`} fill="var(--sx-cyan-bg)" />}
               {curves && <polyline points={curves.pr} stroke="var(--sx-cyan-soft)" strokeWidth="1.6" fill="none" />}
-              <text x="120" y="60" fill="var(--sx-cyan-soft)" fontSize="17" fontWeight="800" fontFamily="ui-monospace">{f4(m?.pr_auc)}</text>
+              <text x="78" y="150" fill="var(--sx-cyan-soft)" fontSize="17" fontWeight="800" fontFamily="ui-monospace">{f4(m?.pr_auc)}</text>
               <text x="145" y="234" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle">Recall</text>
               <text x="14" y="120" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle" transform="rotate(-90 14 120)">Precision</text>
             </svg>
@@ -142,7 +143,7 @@ export default function TrustPage() {
         <div className="card">
           <div className="h">
             <span className="ttl">합의 알고리즘 비교 · {rows.length || "—"}가지 (정직 공개)</span>
-            <span className="sub">★ ≥3/4 권장 = 불량 1건 더 탐지(미탐 비용↓) + 한 모델 틀려도 견고 · F1 내림차순 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
+            <span className="sub">★ ≥3/4 권장 = 불량 1건 더 탐지(미탐 비용↓) + 한 모델 틀려도 견고 · F1 내림차순</span>
           </div>
           <div className="b" style={{ padding: 0 }}>
             <table className="tbl">

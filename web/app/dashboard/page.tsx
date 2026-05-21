@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [sel, setSel] = useState(0);
   const [r, setR] = useState<PredictResult | null>(null);
+  const [baseR, setBaseR] = useState<PredictResult | null>(null);  // 시나리오 고정 baseline (스트리밍과 독립)
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +27,8 @@ export default function DashboardPage() {
         const stored = scenarioStore.get();
         const def = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
         setSel(def);
-        setR(await api.predict(scenarios[def].z));
+        const pr = await api.predict(scenarios[def].z);
+        setR(pr); setBaseR(pr);
       } catch (e: any) {
         setErr(e.message || "백엔드 연결 실패");
       } finally {
@@ -37,7 +39,7 @@ export default function DashboardPage() {
 
   async function pick(i: number) {
     setSel(i); setErr(null); scenarioStore.set(i);
-    try { setR(await api.predict(scenarios[i].z)); }
+    try { const pr = await api.predict(scenarios[i].z); setR(pr); setBaseR(pr); }
     catch (e: any) { setErr(e.message || "예측 실패"); }
   }
 
@@ -46,7 +48,7 @@ export default function DashboardPage() {
     return scenarioStore.subscribe((i) => {
       if (scenarios[i] && i !== sel) {
         setSel(i);
-        api.predict(scenarios[i].z).then(setR).catch(() => {});
+        api.predict(scenarios[i].z).then((pr) => { setR(pr); setBaseR(pr); }).catch(() => {});
       }
     });
   }, [scenarios, sel]);
@@ -81,8 +83,9 @@ export default function DashboardPage() {
     return () => clearTimeout(wfTimer.current);
   }, [wfFrac, baseZ, topIdx]);
 
-  const wfAfter = wfResult?.recon_error ?? r?.recon_error ?? 0;
-  const wfBefore = r?.recon_error ?? 0;
+  // What-if 기준은 시나리오 고정 baseline(baseR) — 라이브 스트리밍(r)과 무관하게 안정
+  const wfBefore = baseR?.recon_error ?? 0;
+  const wfAfter = wfResult?.recon_error ?? wfBefore;
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
   // ── LIVE 스트리밍: 데모(시나리오+노이즈) | 실측 KAMP 리플레이 (상호 배타) ──
@@ -237,7 +240,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="h">
               <span className="ttl">⚑ 다중 AI 합의 미터 · 4 모델</span>
-              <span className="sub">단일 AE FP rate 0.66 → 4-AI 합의 0.19 (−71%) <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
+              <span className="sub">단일 AE FP rate 0.66 → 4-AI 합의 0.19 (−71%)</span>
             </div>
             <div className="b">
               <Consensus
@@ -306,7 +309,7 @@ export default function DashboardPage() {
         <div className="card">
           <div className="h">
             <span className="ttl">What-if 듀얼 슬라이더</span>
-            <span className="sub">예측: <span className="num" style={{ color: "var(--sx-red-soft)" }}>{wfBefore.toFixed(3)}</span> → <span className="num" style={{ color: wfDelta < 0 ? "var(--sx-cyan)" : "var(--sx-text)" }}>{wfAfter.toFixed(3)}</span> ({wfDelta > 0 ? "+" : ""}{wfDelta}%) <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
+            <span className="sub">예측: <span className="num" style={{ color: "var(--sx-red-soft)" }}>{wfBefore.toFixed(3)}</span> → <span className="num" style={{ color: wfDelta < 0 ? "var(--sx-cyan)" : "var(--sx-text)" }}>{wfAfter.toFixed(3)}</span> ({wfDelta > 0 ? "+" : ""}{wfDelta}%)</span>
           </div>
           <div className="b" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {topIdx.map((idx, k) => {
@@ -346,7 +349,7 @@ export default function DashboardPage() {
         <div className="card">
           <div className="h"><span className="ttl">자연어 진단 보고서</span><span className="sub">{nlg?.model === "template" ? "템플릿" : "Claude Haiku"} {nlgLoading ? "· 생성 중…" : ""}</span></div>
           <div className="b">
-            <div style={{ fontSize: 11.5, lineHeight: 1.7, color: "var(--sx-text-2)", fontWeight: 500, minHeight: 60 }}>
+            <div style={{ fontSize: 11.5, lineHeight: 1.7, color: "var(--sx-text-2)", fontWeight: 500, minHeight: 60, whiteSpace: "pre-line" }}>
               {nlg ? nlg.text : (nlgLoading ? "보고서 생성 중…" : "분석 대기 중…")}
             </div>
           </div>

@@ -4,7 +4,7 @@
    고온/고압은 곧 작업자 안전 위험 → 이상탐지 엔진을 안전 모니터링에 재활용(정직한 파생). */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, scenarioStore, PredictResult, Scenario } from "@/lib/api";
+import { api, scenarioStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
 
 // 안전 관련 센서 그룹 → 위험 유형
 const HAZARD = {
@@ -12,12 +12,32 @@ const HAZARD = {
   "압력 / PRESS": { type: "과압", icon: "⚠", action: "유압 라인·안전밸브 점검 · 고압 분출 위험 · 보호구 착용", col: "var(--sx-red-soft)" },
   "속도 / RPM": { type: "기계", icon: "⚙", action: "스크류 구동부 점검 · 회전체 끼임 위험 · 비상정지 확인", col: "var(--sx-cyan)" },
 };
-const lvl = (z: number) => (Math.abs(z) >= 4 ? { t: "위험", c: "var(--sx-red-soft)", n: 3 } : Math.abs(z) >= 2 ? { t: "경고", c: "#FFA756", n: 2 } : { t: "정상", c: "var(--sx-cyan)", n: 1 });
+// σ 밴드 → 4단계 (관리도 기준: 2σ 경고 · 3σ 위험 · 4.5σ 긴급) — 진단 등급 체계와 정렬
+const lvl = (z: number) => {
+  const a = Math.abs(z);
+  return a >= 4.5 ? { t: "긴급", c: "var(--sx-red-soft)", n: 4 }
+    : a >= 3 ? { t: "위험", c: "var(--sx-red-soft)", n: 3 }
+    : a >= 2 ? { t: "경고", c: "#FFA756", n: 2 }
+    : { t: "정상", c: "var(--sx-cyan)", n: 1 };
+};
+// 위험 유형 → 센서 그룹 멤버 (검증셋 불량 주원인 빈도 = 발생가능성 산출용)
+const GROUP_SENSORS: Record<string, string[]> = {
+  "온도 / TEMP": ["Barrel_Temperature_1", "Barrel_Temperature_2", "Barrel_Temperature_3", "Barrel_Temperature_4", "Barrel_Temperature_5", "Barrel_Temperature_6", "Hopper_Temperature", "Mold_Temperature_3", "Mold_Temperature_4"],
+  "압력 / PRESS": ["Max_Injection_Pressure", "Max_Switch_Over_Pressure", "Max_Back_Pressure", "Average_Back_Pressure"],
+  "속도 / RPM": ["Max_Injection_Speed", "Max_Screw_RPM", "Average_Screw_RPM"],
+};
+const STATUS_OVERALL: Record<string, { t: string; c: string; n: number }> = {
+  CRITICAL: { t: "긴급", c: "var(--sx-red-soft)", n: 4 },
+  DANGER: { t: "위험", c: "var(--sx-red-soft)", n: 3 },
+  WARNING: { t: "경고", c: "#FFA756", n: 2 },
+  NORMAL: { t: "안전", c: "var(--sx-cyan)", n: 1 },
+};
 
 export default function SafetyPage() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [sel, setSel] = useState(0);
   const [r, setR] = useState<PredictResult | null>(null);
+  const [shotsData, setShotsData] = useState<{ shots: number[][]; labels: number[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,7 +51,23 @@ export default function SafetyPage() {
         setR(await api.predict(scenarios[def].z));
       } catch (e: any) { setErr(e.message || "백엔드 연결 실패"); }
     })();
+    api.shots().then((d) => setShotsData({ shots: d.shots, labels: d.labels })).catch(() => {});
   }, []);
+
+  // 검증셋 39개 불량의 주원인(|z| 최대) 센서 → 위험유형별 발생빈도(실측 발생가능성)
+  const hazardFreq = React.useMemo(() => {
+    const out: Record<string, number> = { "온도 / TEMP": 0, "압력 / PRESS": 0, "속도 / RPM": 0 };
+    if (!shotsData) return { freq: out, defects: 0 };
+    let defects = 0;
+    shotsData.labels.forEach((l, i) => {
+      if (!l) return; defects++;
+      const z = shotsData.shots[i]; let mi = 0, mv = 0;
+      for (let j = 0; j < z.length; j++) if (Math.abs(z[j]) > mv) { mv = Math.abs(z[j]); mi = j; }
+      const name = SENSOR_COLS[mi];
+      for (const g of Object.keys(out)) if (GROUP_SENSORS[g].includes(name)) out[g]++;
+    });
+    return { freq: out, defects };
+  }, [shotsData]);
 
   async function pick(i: number) {
     setSel(i); setErr(null); scenarioStore.set(i);
@@ -58,8 +94,13 @@ export default function SafetyPage() {
   const overheat = maxByType("온도 / TEMP");
   const overpress = maxByType("압력 / PRESS");
   const mech = Math.max(0, ...(groups.find((g) => g.group === "속도 / RPM")?.rows.map((x) => Math.abs(x.sigma)) ?? [0]));
-  const overallN = Math.max(lvl(overheat).n, lvl(overpress).n, lvl(mech).n);
-  const overall = overallN === 3 ? { t: "위험", c: "var(--sx-red-soft)" } : overallN === 2 ? { t: "경고", c: "#FFA756" } : { t: "안전", c: "var(--sx-cyan)" };
+  // 종합 안전 등급 = 진단 status(권위) 그대로. 개별 위험은 σ 밴드.
+  const overall = r ? STATUS_OVERALL[r.status] : { t: "—", c: "var(--sx-text-3)", n: 0 };
+  const overallN = overall.n;
+  // 안전 센서 정상률 (실측) — 안전관련 센서 중 |σ|<2 비율
+  const safetyRows = safetyGroups.flatMap((g) => g.rows);
+  const safeOk = safetyRows.filter((x) => Math.abs(x.sigma) < 2).length;
+  const safeRate = safetyRows.length ? safeOk / safetyRows.length : null;
 
   return (
     <DashShell activeTab={5} scenario={sel === 0 ? "정상" : scenarios[sel]?.name || "위험"}
@@ -82,10 +123,10 @@ export default function SafetyPage() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
-        <div className={"kpi" + (overall.t === "위험" ? " red" : overall.t === "경고" ? "" : " cyan")}>
+        <div className={"kpi" + (overallN >= 3 ? " red" : overallN === 2 ? "" : " cyan")}>
           <div className="lbl">종합 안전 등급</div>
           <div className="val" style={{ color: overall.c }}>{overall.t}</div>
-          <div className="ci">{alerts.length}건 활성 경보</div>
+          <div className="ci">{alerts.length}건 활성 경보 · 진단 연동</div>
         </div>
         <div className={"kpi" + (lvl(overheat).n >= 2 ? " red" : "")}>
           <div className="lbl">과열 위험 🔥</div>
@@ -103,9 +144,9 @@ export default function SafetyPage() {
           <div className="ci" style={{ color: lvl(mech).c }}>{lvl(mech).t} · 회전체</div>
         </div>
         <div className="kpi cyan">
-          <div className="lbl">무사고 연속</div>
-          <div className="val num">147<span className="u">일</span></div>
-          <div className="ci">목표 365일 · 가정</div>
+          <div className="lbl">안전센서 정상률</div>
+          <div className="val num">{safeRate !== null ? (safeRate * 100).toFixed(0) : "—"}<span className="u">%</span></div>
+          <div className="ci">{safetyRows.length ? `${safeOk}/${safetyRows.length} 센서 |σ|<2` : "—"} · 실측</div>
         </div>
       </div>
 
@@ -130,31 +171,44 @@ export default function SafetyPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: 0 }}>
           <div className="card" style={{ flex: 1 }}>
-            <div className="h"><span className="ttl">위험성 평가 매트릭스</span><span className="sub">발생가능성 × 심각도 · ISO 12100</span></div>
+            <div className="h"><span className="ttl">위험성 평가 매트릭스</span><span className="sub">발생가능성(실측 불량빈도) × 심각도(현재 σ)</span></div>
             <div className="b">
-              <svg viewBox="0 0 300 200" style={{ width: "100%", height: 200, display: "block" }}>
-                {/* 3x3 위험 매트릭스 */}
+              <svg viewBox="0 0 300 210" style={{ width: "100%", height: 210, display: "block" }}>
+                {/* 3x3 위험 매트릭스 (행=발생가능성 높음→낮음, 열=심각도 경미→치명) */}
                 {[0, 1, 2].map((row) => [0, 1, 2].map((col) => {
                   const score = (col + 1) * (3 - row);
                   const c = score >= 6 ? "var(--sx-red-bg)" : score >= 3 ? "rgba(255,167,86,0.12)" : "var(--sx-cyan-bg)";
                   const bd = score >= 6 ? "var(--sx-red-bd)" : score >= 3 ? "rgba(255,167,86,0.3)" : "var(--sx-cyan-bd)";
-                  return <rect key={`${row}-${col}`} x={60 + col * 70} y={20 + row * 50} width="68" height="48" fill={c} stroke={bd} strokeWidth="0.8" />;
+                  return <rect key={`${row}-${col}`} x={64 + col * 68} y={18 + row * 46} width="66" height="44" fill={c} stroke={bd} strokeWidth="0.8" />;
                 }))}
-                {/* 위험 플롯 (과열/과압/기계) */}
-                {[
-                  { lbl: "과열", z: overheat, x: 60 + (Math.min(2, Math.floor(Math.abs(overheat) / 2)) ) * 70 + 34 },
-                  { lbl: "과압", z: overpress, x: 60 + (Math.min(2, Math.floor(Math.abs(overpress) / 2))) * 70 + 34 },
-                ].map((p, i) => {
-                  const sevRow = 2 - Math.min(2, Math.floor(Math.abs(p.z) / 2));
-                  return Math.abs(p.z) >= 2 ? (
-                    <g key={i}>
-                      <circle cx={p.x} cy={20 + sevRow * 50 + 24} r="9" fill="var(--sx-red)" opacity="0.9" />
-                      <text x={p.x} y={20 + sevRow * 50 + 27} fill="#fff" fontSize="8" fontWeight="800" textAnchor="middle">{p.lbl}</text>
-                    </g>
-                  ) : null;
-                })}
-                <text x="155" y="14" fill="var(--sx-text-3)" fontSize="8" fontWeight="700" textAnchor="middle">심각도 →</text>
-                <text x="50" y="120" fill="var(--sx-text-3)" fontSize="8" fontWeight="700" textAnchor="middle" transform="rotate(-90 50 120)">발생가능성 →</text>
+                {/* 위험 플롯: x=심각도(현재 σ), y=발생가능성(실측 불량 주원인 빈도) */}
+                {(() => {
+                  const defects = Math.max(1, hazardFreq.defects);
+                  const sevCol = (z: number) => { const a = Math.abs(z); return a >= 4 ? 2 : a >= 2 ? 1 : 0; };
+                  const likRow = (g: string) => { const f = hazardFreq.freq[g] / defects; return f >= 0.3 ? 0 : f >= 0.1 ? 1 : 2; };
+                  const items = [
+                    { lbl: "과열", g: "온도 / TEMP", z: overheat, c: "#FFA756" },
+                    { lbl: "과압", g: "압력 / PRESS", z: overpress, c: "var(--sx-red)" },
+                    { lbl: "기계", g: "속도 / RPM", z: mech, c: "var(--sx-cyan)" },
+                  ].filter((p) => Math.abs(p.z) >= 2).map((p) => ({ ...p, col: sevCol(p.z), row: likRow(p.g) }));
+                  const seen: Record<string, number> = {};
+                  return items.map((p, i) => {
+                    const k = `${p.row}-${p.col}`; const off = seen[k] || 0; seen[k] = off + 1;
+                    const cx = 64 + p.col * 68 + 33 + (off * 18 - (off > 0 ? 9 : 0));
+                    const cy = 18 + p.row * 46 + 22;
+                    return (
+                      <g key={i}>
+                        <circle cx={cx} cy={cy} r="11" fill={p.c} opacity="0.92" />
+                        <text x={cx} y={cy + 3} fill="#fff" fontSize="8" fontWeight="800" textAnchor="middle">{p.lbl}</text>
+                      </g>
+                    );
+                  });
+                })()}
+                {/* 축 라벨 */}
+                <text x="165" y="12" fill="var(--sx-text-3)" fontSize="8" fontWeight="700" textAnchor="middle">심각도(σ) →</text>
+                {["경미", "중대", "치명"].map((t, i) => <text key={t} x={64 + i * 68 + 33} y="190" fill="var(--sx-text-4)" fontSize="7.5" fontWeight="700" textAnchor="middle">{t}</text>)}
+                <text x="12" y="110" fill="var(--sx-text-3)" fontSize="8" fontWeight="700" textAnchor="middle" transform="rotate(-90 12 110)">← 발생가능성</text>
+                <text x="200" y="204" fill="var(--sx-text-4)" fontSize="7" fontWeight="600" textAnchor="end">발생가능성=불량 {hazardFreq.defects}건 주원인 빈도</text>
               </svg>
             </div>
           </div>

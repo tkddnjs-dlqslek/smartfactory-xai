@@ -125,7 +125,7 @@ export default function ProductionPage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">생산 품질 분포 · 검증 {agg ? agg.total.toLocaleString() : "1,379"}샷</span><span className="sub">12구간 · 양품(회색)+불량(빨강) <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span></div>
+          <div className="h"><span className="ttl">생산 품질 분포 · 검증 {agg ? agg.total.toLocaleString() : "1,379"}샷</span><span className="sub">12구간 · 양품(회색)+불량(빨강)</span></div>
           <div className="b">
             <svg viewBox="0 0 720 200" style={{ width: "100%", height: 200, display: "block" }}>
               {/* y축 + 그리드 */}
@@ -160,7 +160,7 @@ export default function ProductionPage() {
       </div>
 
       <div className="card">
-        <div className="h"><span className="ttl">불량 원인 Pareto · 실측 {agg ? agg.defect : 39}건 주원인 센서</span><span className="sub">불량 샷의 최대 이상(|σ|) 센서 집계 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span></div>
+        <div className="h"><span className="ttl">불량 원인 Pareto · 실측 {agg ? agg.defect : 39}건 주원인 센서</span><span className="sub">불량 샷의 최대 이상(|σ|) 센서 집계</span></div>
         <div className="b" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {agg && (() => {
             const tot = agg.pareto.reduce((s, p) => s + p.n, 0); let cum = 0;

@@ -4,18 +4,17 @@
    디자인 1:1 매칭 — mock 데이터로 우선 구동 (백엔드 연동은 다음 단계) */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, MetricsBundle } from "@/lib/api";
+import { api, MetricsBundle, SENSOR_COLS } from "@/lib/api";
 
-const TOP20 = [
-  { r: 1, s: "#0,991", t: "2026-05-12 09:34", re: 0.553, so: 0.984, m: "Filling +5.1σ", sh: 0.291, gt: "DEFECT", pr: "DEFECT" },
-  { r: 2, s: "#1,248", t: "2026-05-19 14:32", re: 0.412, so: 0.957, m: "Nozzle +4.8σ", sh: 0.310, gt: "DEFECT", pr: "DEFECT" },
-  { r: 3, s: "#0,672", t: "2026-04-28 11:18", re: 0.402, so: 0.921, m: "Cushion +4.2σ", sh: 0.268, gt: "DEFECT", pr: "DEFECT" },
-  { r: 4, s: "#0,415", t: "2026-03-22 16:09", re: 0.388, so: 0.901, m: "Peak P. +3.9σ", sh: 0.241, gt: "DEFECT", pr: "DEFECT" },
-  { r: 5, s: "#1,168", t: "2026-05-17 22:48", re: 0.371, so: 0.872, m: "Hot Run. +3.2σ", sh: 0.218, gt: "DEFECT", pr: "DEFECT" },
-  { r: 6, s: "#0,811", t: "2026-05-04 04:55", re: 0.354, so: 0.844, m: "Mold A +2.9σ", sh: 0.196, gt: "DEFECT", pr: "DEFECT" },
-  { r: 7, s: "#0,532", t: "2026-04-11 17:21", re: 0.328, so: 0.798, m: "Inject_P +2.7σ", sh: 0.184, gt: "DEFECT", pr: "DEFECT" },
-  { r: 8, s: "#0,247", t: "2026-02-19 13:02", re: 0.305, so: 0.762, m: "Cycle +2.4σ", sh: 0.165, gt: "NORMAL", pr: "DEFECT" },
-];
+const KO: Record<string, string> = {
+  Max_Back_Pressure: "최대 배압", Max_Injection_Speed: "최대 사출속도", Filling_Time: "충전 시간",
+  Injection_Time: "사출 시간", Cycle_Time: "사이클 시간", Max_Switch_Over_Pressure: "최대 전환압력",
+  Cushion_Position: "쿠션 위치", Mold_Temperature_4: "금형온도4", Mold_Temperature_3: "금형온도3",
+  Average_Back_Pressure: "평균 배압", Max_Screw_RPM: "최대 스크류RPM", Average_Screw_RPM: "평균 스크류RPM",
+  Max_Injection_Pressure: "최대 사출압력", Plasticizing_Time: "가소화 시간", Plasticizing_Position: "가소화 위치",
+  Clamp_Close_Time: "형체결 시간", Clamp_Open_Position: "형개방 위치", Hopper_Temperature: "호퍼 온도",
+};
+const ko = (s: string) => KO[s] || s;
 
 export default function BatchPage() {
   const [cm, setCm] = useState<any>(null);
@@ -24,13 +23,31 @@ export default function BatchPage() {
 
   // τ 민감도 시뮬레이션 — 현재 모델 실측 per-shot 점수
   const [vs, setVs] = useState<{ errors: number[]; labels: number[]; err_min: number; err_max: number } | null>(null);
+  const [shots, setShots] = useState<number[][] | null>(null);
   const [tau, setTau] = useState(0.32);
 
   useEffect(() => {
     api.metrics().then((b: MetricsBundle) => { setCm(b.ensemble?.ae_alone); setM(b.metrics); })
       .catch((e) => setErr(e.message || "지표 연결 실패"));
     api.validation().then(setVs).catch(() => {});
+    api.shots().then((d) => setShots(d.shots)).catch(() => {});
   }, []);
+
+  // 상위 20건 이상 샷 — 검증 1,379샷에서 복원오차 내림차순 (전부 실측)
+  const top20 = React.useMemo(() => {
+    if (!vs) return null;
+    const idx = vs.errors.map((e, i) => i).sort((a, b) => vs.errors[b] - vs.errors[a]).slice(0, 20);
+    return idx.map((i, rank) => {
+      let main = "—", sig = 0;
+      if (shots) {
+        const z = shots[i]; let mi = 0, mv = 0;
+        for (let j = 0; j < z.length; j++) if (Math.abs(z[j]) > mv) { mv = Math.abs(z[j]); mi = j; }
+        main = ko(SENSOR_COLS[mi]); sig = z[mi];
+      }
+      const e = vs.errors[i], y = vs.labels[i], pred = e >= tau ? 1 : 0;
+      return { rank: rank + 1, row: i, re: e, ratio: e / tau, main, sig, gt: y, pred };
+    });
+  }, [vs, shots, tau]);
 
   const total = cm ? cm.tp + cm.fp + cm.fn + cm.tn : null;
   const nDefect = cm ? cm.tp + cm.fn : null;
@@ -113,62 +130,32 @@ export default function BatchPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
         <div className="card">
-          <div className="h"><span className="ttl">상위 20건 이상 샷 · 정렬 가능</span><span className="sub">복원 오차 내림차순 · KAMP 실측</span></div>
+          <div className="h"><span className="ttl">상위 20건 이상 샷 · 복원오차 내림차순</span><span className="sub">검증 1,379샷 모델 실측 · 혼동행렬은 모델 신뢰도 탭 참조</span></div>
           <div className="b" style={{ padding: 0 }}>
             <table className="tbl">
-              <thead><tr><th>RANK</th><th>SHOT</th><th>TIMESTAMP</th><th>RECON</th><th>4-AI SOFT</th><th>주센서</th><th>SHAP</th><th>실제</th><th>예측</th></tr></thead>
+              <thead><tr><th>RANK</th><th>SHOT</th><th>RECON</th><th>비율(×τ)</th><th>주센서 (±σ)</th><th>실제</th><th>판정</th></tr></thead>
               <tbody>
-                {TOP20.map(r => (
-                  <tr key={r.s}>
-                    <td className="num"><span className="tag" style={{ color: "var(--sx-text-3)" }}>#{r.r.toString().padStart(2, "0")}</span></td>
-                    <td className="num">{r.s}</td>
-                    <td className="num">{r.t}</td>
-                    <td className="num" style={{ color: "var(--sx-red-soft)" }}>{r.re.toFixed(3)}</td>
-                    <td className="num" style={{ color: "var(--sx-cyan)" }}>{r.so.toFixed(3)}</td>
-                    <td>{r.m}</td>
-                    <td className="num">{r.sh.toFixed(3)}</td>
-                    <td>{r.gt === "DEFECT" ? <span className="tag red">DEFECT</span> : <span className="tag">NORMAL</span>}</td>
-                    <td>{r.pr === r.gt ? <span className="tag cyan">✓</span> : <span className="tag" style={{ color: "var(--sx-red-soft)" }}>✗ FP</span>}</td>
-                  </tr>
-                ))}
+                {top20 && top20.map(r => {
+                  const judge = r.pred && r.gt ? "TP" : r.pred && !r.gt ? "FP" : !r.pred && r.gt ? "FN" : "TN";
+                  return (
+                    <tr key={r.row}>
+                      <td className="num"><span className="tag" style={{ color: "var(--sx-text-3)" }}>#{r.rank.toString().padStart(2, "0")}</span></td>
+                      <td className="num">#{r.row.toString().padStart(4, "0")}</td>
+                      <td className="num" style={{ color: "var(--sx-red-soft)" }}>{r.re.toFixed(4)}</td>
+                      <td className="num" style={{ color: r.ratio >= 1 ? "var(--sx-red-soft)" : "var(--sx-text-3)" }}>{r.ratio.toFixed(2)}×</td>
+                      <td>{r.main} <span className="num" style={{ color: "var(--sx-text-3)" }}>{r.sig >= 0 ? "+" : ""}{r.sig.toFixed(1)}σ</span></td>
+                      <td>{r.gt ? <span className="tag red">DEFECT</span> : <span className="tag">NORMAL</span>}</td>
+                      <td>{judge === "TP" ? <span className="tag cyan">✓ TP</span> : judge === "FP" ? <span className="tag" style={{ color: "#FFA756" }}>✗ FP</span> : judge === "FN" ? <span className="tag" style={{ color: "var(--sx-red-soft)" }}>✗ FN</span> : <span className="tag">TN</span>}</td>
+                    </tr>
+                  );
+                })}
+                {!top20 && <tr><td colSpan={7} style={{ fontSize: 11, color: "var(--sx-text-3)", padding: 12 }}>로딩…</td></tr>}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="h"><span className="ttl">공식 검증 혼동 행렬 · τ 고정</span><span className="sub">발표 기준 실측 · F1 0.7324 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span></div>
-          <div className="b">
-            <div style={{ display: "grid", gridTemplateColumns: "56px 1fr 1fr", gridTemplateRows: "24px 1fr 1fr", gap: 4 }}>
-              <div></div>
-              <div style={{ textAlign: "center", fontSize: 9, fontWeight: 700, color: "var(--sx-text-3)", letterSpacing: 0.6 }}>PRED N</div>
-              <div style={{ textAlign: "center", fontSize: 9, fontWeight: 700, color: "var(--sx-text-3)", letterSpacing: 0.6 }}>PRED D</div>
-              <div style={{ display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, color: "var(--sx-text-3)" }}>TRUE N</div>
-              <div style={{ background: "var(--sx-cyan-bg)", border: "1px solid var(--sx-cyan-bd)", padding: "14px 10px", textAlign: "center" }}>
-                <div className="num" style={{ fontSize: 26, color: "var(--sx-cyan)", fontWeight: 800 }}>{cm ? cm.tn.toLocaleString() : "—"}</div>
-                <div className="eyebrow" style={{ color: "var(--sx-cyan)" }}>TN</div>
-              </div>
-              <div style={{ background: "var(--sx-red-bg)", border: "1px solid var(--sx-red-bd)", padding: "14px 10px", textAlign: "center" }}>
-                <div className="num" style={{ fontSize: 26, color: "var(--sx-red-soft)", fontWeight: 800 }}>{cm ? cm.fp : "—"}</div>
-                <div className="eyebrow" style={{ color: "var(--sx-red-soft)" }}>FP</div>
-              </div>
-              <div style={{ display: "grid", placeItems: "center", fontSize: 9, fontWeight: 700, color: "var(--sx-text-3)" }}>TRUE D</div>
-              <div style={{ background: "var(--sx-red-bg)", border: "1px solid var(--sx-red-bd)", padding: "14px 10px", textAlign: "center" }}>
-                <div className="num" style={{ fontSize: 26, color: "var(--sx-red-soft)", fontWeight: 800 }}>{cm ? cm.fn : "—"}</div>
-                <div className="eyebrow" style={{ color: "var(--sx-red-soft)" }}>FN</div>
-              </div>
-              <div style={{ background: "var(--sx-cyan-bg)", border: "1px solid var(--sx-cyan-bd)", padding: "14px 10px", textAlign: "center" }}>
-                <div className="num" style={{ fontSize: 26, color: "var(--sx-cyan)", fontWeight: 800 }}>{cm ? cm.tp : "—"}</div>
-                <div className="eyebrow" style={{ color: "var(--sx-cyan)" }}>TP</div>
-              </div>
-            </div>
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--sx-border)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 11 }}>
-              <div><span className="eyebrow">Precision</span><div className="num" style={{ fontSize: 16, fontWeight: 800, color: "var(--sx-cyan)" }}>{m ? m.precision.toFixed(4) : "—"}</div></div>
-              <div><span className="eyebrow">Recall</span><div className="num" style={{ fontSize: 16, fontWeight: 800, color: "var(--sx-text)" }}>{m ? m.recall.toFixed(4) : "—"}</div></div>
-              <div><span className="eyebrow">F1</span><div className="num" style={{ fontSize: 16, fontWeight: 800, color: "var(--sx-cyan)" }}>{m ? m.f1.toFixed(4) : "—"}</div></div>
-              <div><span className="eyebrow">FPR</span><div className="num" style={{ fontSize: 16, fontWeight: 800, color: "var(--sx-text)" }}>{cm && nNormal ? (cm.fp / nNormal).toFixed(4) : "—"}</div></div>
+            <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, padding: "6px 10px", lineHeight: 1.5 }}>
+              SHOT=검증셋 행번호 · 비율=복원오차/τ · 판정은 슬라이더 τ({tau.toFixed(3)})에 연동 · 전체 KAMP 795K는 cn7과 분포가 달라(OOD) 라벨 보유한 검증셋 기준
             </div>
           </div>
         </div>
