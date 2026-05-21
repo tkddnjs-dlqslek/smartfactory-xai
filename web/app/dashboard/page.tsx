@@ -88,19 +88,20 @@ export default function DashboardPage() {
 
   // ── LIVE 스트리밍 (1Hz 자동 재예측) ──
   const [live, setLive] = useState(false);
+  const [tick, setTick] = useState(0);
   useEffect(() => liveStore.subscribe(setLive), []);
+  useEffect(() => { if (!live) setTick(0); }, [live]);
   useEffect(() => {
     if (!live || !baseZ) return;
     const id = setInterval(async () => {
       // 현재 시나리오 기준 미세 드리프트(±0.1σ)로 라이브 센서 피드 흉내
       const drifted = baseZ.map((v) => v + (Math.random() - 0.5) * 0.2);
-      try { setR(await api.predict(drifted)); } catch { /* keep last */ }
+      try { setR(await api.predict(drifted)); setTick((t) => t + 1); } catch { /* keep last */ }
     }, 1000);
     return () => clearInterval(id);
   }, [live, baseZ]);
 
-  // ── 자연어 진단 보고서 (Claude Haiku 라이브) ──
-  const [nlgTone, setNlgTone] = useState<"worker" | "supervisor" | "director">("worker");
+  // ── 자연어 진단 보고서 (Claude Haiku 라이브 · 작업자 톤 단일) ──
   const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);
   const [nlgLoading, setNlgLoading] = useState(false);
 
@@ -108,12 +109,12 @@ export default function DashboardPage() {
     if (!baseZ) return;
     let cancelled = false;
     setNlgLoading(true);
-    api.report(baseZ, nlgTone)
+    api.report(baseZ, "worker")
       .then((res) => { if (!cancelled) setNlg({ text: res.text, model: res.model }); })
       .catch(() => { if (!cancelled) setNlg(null); })
       .finally(() => { if (!cancelled) setNlgLoading(false); });
     return () => { cancelled = true; };
-  }, [baseZ, nlgTone]);
+  }, [baseZ]);
 
   const sev = r?.severity ?? 0;
   const isDanger = sev >= 2;
@@ -156,7 +157,7 @@ export default function DashboardPage() {
             background: live ? "var(--sx-red-bg)" : "transparent",
             color: live ? "var(--sx-red-soft)" : "var(--sx-text-2)",
           }}>{live ? "■ LIVE 정지" : "▶ LIVE 스트리밍"}</button>
-        {live && <span className="pill live"><span className="pulse"></span> 1Hz 스트리밍 중</span>}
+        {live && <span className="pill live"><span className="pulse"></span> 1Hz 스트리밍 · {tick.toLocaleString()}샷 분석</span>}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
@@ -316,16 +317,6 @@ export default function DashboardPage() {
         <div className="card">
           <div className="h"><span className="ttl">자연어 진단 보고서</span><span className="sub">{nlg?.model === "template" ? "템플릿" : "Claude Haiku"} {nlgLoading ? "· 생성 중…" : ""}</span></div>
           <div className="b">
-            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-              {([["worker", "작업자"], ["supervisor", "반장"], ["director", "부서장"]] as const).map(([k, lbl]) => (
-                <button key={k} onClick={() => setNlgTone(k)} className="tag"
-                  style={{
-                    cursor: "pointer", border: "1px solid " + (nlgTone === k ? "var(--sx-cyan-bd)" : "var(--sx-border-2)"),
-                    background: nlgTone === k ? "var(--sx-cyan-bg)" : "transparent",
-                    color: nlgTone === k ? "var(--sx-cyan)" : "var(--sx-text-3)",
-                  }}>{lbl}</button>
-              ))}
-            </div>
             <div style={{ fontSize: 11.5, lineHeight: 1.7, color: "var(--sx-text-2)", fontWeight: 500, minHeight: 60 }}>
               {nlg ? nlg.text : (nlgLoading ? "보고서 생성 중…" : "분석 대기 중…")}
             </div>

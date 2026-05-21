@@ -240,7 +240,7 @@
 
 /* ─── 24-sensor slider list ─── */
 .sx .sensor {
-  display: grid; grid-template-columns: 110px 1fr 56px 36px;
+  display: grid; grid-template-columns: 1fr auto;
   gap: 10px; align-items: center;
   padding: 4px 0; font-size: 10.5px;
 }

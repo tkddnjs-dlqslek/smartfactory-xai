@@ -4,7 +4,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { liveStore } from "@/lib/live";
-import { scenarioStore } from "@/lib/api";
 
 /* ───── 5탭 → 라우트 매핑 ───── */
 export const TAB_ROUTES: Record<number, string> = {
@@ -200,8 +199,6 @@ export function TopBar({ width = 1440 }: any) {
 
 /* ───── sidebar 280 ───── */
 export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
-  const [live, setLive] = useState(false);
-  useEffect(() => liveStore.subscribe(setLive), []);
   const [toggles, setToggles] = useState<Record<string, boolean>>({
     "OPC-UA 스트림": true, "Slack 알람": true, "PDF 자동 리포트": false,
   });
@@ -217,7 +214,7 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
     { p: "안전 관리 / Safety", c: "#FFA756", tabs: [
       { i: 5, t: "안전 위험 모니터링", sub: "Safety" },
     ]},
-    { p: "생산 관리 / Production", c: "var(--sx-cyan)", tabs: [
+    { p: "생산 관리 / Production", c: "#4CAF50", tabs: [
       { i: 6, t: "생산 현황 · OEE",   sub: "Production" },
     ]},
     { p: "AI 신뢰도 / Trust", c: "var(--sx-text-3)", tabs: [
@@ -259,45 +256,14 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
 
       <div className="hair"></div>
       <div style={{padding:"14px 18px"}}>
-        <div className="eyebrow">데모 시나리오</div>
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginTop:8}}>
-          {[
-            { l:"정상",   sub:"baseline",   ratio:"100%" },
-            { l:"경고 #8", sub:"162%",      ratio:"162%" },
-            { l:"위험 #27",sub:"523%",      ratio:"523%" },
-            { l:"긴급 #37",sub:"978%",      ratio:"978%" },
-          ].map((s, idx) => {
-            const key = s.l.split(" ")[0]; // 정상/경고/위험/긴급
-            const on = typeof scenario === "string" && scenario.startsWith(key);
-            const danger = key === "위험" || key === "긴급";
-            return (
-              <div key={s.l} onClick={() => scenarioStore.set(idx)} title="클릭하면 실시간 진단에 적용" style={{
-                cursor:"pointer",
-                padding:"8px 9px", border:"1px solid " + (on ? (danger ? "var(--sx-red-bd)" : "var(--sx-cyan-bd)") : "var(--sx-border-2)"),
-                background: on ? (danger ? "var(--sx-red-bg)" : "var(--sx-cyan-bg)") : "transparent",
-                borderRadius:2
-              }}>
-                <div style={{fontSize:11, fontWeight:800, color: on ? (danger ? "var(--sx-red-soft)" : "var(--sx-cyan)") : "var(--sx-text-2)"}}>{s.l}</div>
-                <div style={{fontSize:9, color:"var(--sx-text-4)", fontWeight:700, marginTop:1}}>{s.sub}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="hair"></div>
-      <div style={{padding:"14px 18px"}}>
-        <div className="eyebrow" style={{marginBottom:8}}>실시간 입력 토글</div>
+        <div className="eyebrow" style={{marginBottom:8}}>외부 연동</div>
         {[
-          { l:"LIVE 디지털 트윈", v:"1Hz 스트리밍" },
           { l:"OPC-UA 스트림",   v:"connected" },
           { l:"Slack 알람",      v:"#prod-alerts" },
           { l:"PDF 자동 리포트", v:"08:00 KST" },
         ].map(t => {
-          const isLive = t.l === "LIVE 디지털 트윈";
-          const on = isLive ? live : !!toggles[t.l];
-          const danger = isLive;
-          const onClick = () => isLive ? liveStore.toggle() : setToggles(p => ({ ...p, [t.l]: !p[t.l] }));
+          const on = !!toggles[t.l];
+          const onClick = () => setToggles(p => ({ ...p, [t.l]: !p[t.l] }));
           return (
             <div key={t.l} onClick={onClick} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 0", fontSize:11, fontWeight:600, cursor:"pointer"}}>
               <div>
@@ -305,7 +271,7 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
                 <div style={{fontSize:9, color:"var(--sx-text-4)", fontWeight:700, marginTop:1}}>{t.v}</div>
               </div>
               <div style={{
-                width:28, height:14, background: on ? (danger ? "var(--sx-red)" : "var(--sx-cyan)") : "var(--sx-surface-3)",
+                width:28, height:14, background: on ? "var(--sx-cyan)" : "var(--sx-surface-3)",
                 position:"relative", borderRadius:0, transition:"background 0.15s"
               }}>
                 <div style={{
@@ -368,7 +334,6 @@ export function DashShell({ activeTab, scenario = "정상", children, headline, 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <Sidebar active={activeTab} scenario={scenario} />
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <TabBar active={activeTab} />
           <div style={{ padding: "18px 24px 24px", display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
             {(headline || sub) && (
               <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 4 }}>
@@ -440,10 +405,6 @@ export function SensorGrid({ groups }: any = {}) {
             {g.rows.map((r: any) => (
               <div className="sensor" key={r.name}>
                 <span className={"nm" + (r.hot ? " hot" : "")}>{r.name}</span>
-                <div className="tr">
-                  <div className={"kn " + (r.hot ? "hot" : r.warm ? "warm" : "")} style={{width: r.pos*100 + "%"}}></div>
-                </div>
-                <span className="val">{r.pos.toFixed(2)}</span>
                 <span className={"sig" + (r.hot ? " hot" : "")}>{r.sigma > 0 ? "+" : ""}{r.sigma.toFixed(1)}σ</span>
               </div>
             ))}
@@ -460,10 +421,6 @@ export function SensorGrid({ groups }: any = {}) {
           {g.rows.map((r: any) => (
             <div className="sensor" key={r[0]}>
               <span className={"nm" + (r[3] ? " hot" : "")}>{r[0]}</span>
-              <div className="tr">
-                <div className={"kn " + (r[3] ? "hot" : Math.abs(r[2]) >= 1 ? "warm" : "")} style={{width: r[1]*100 + "%"}}></div>
-              </div>
-              <span className="val">{r[1].toFixed(2)}</span>
               <span className={"sig" + (r[3] ? " hot" : "")}>{r[2] > 0 ? "+" : ""}{r[2].toFixed(1)}σ</span>
             </div>
           ))}
