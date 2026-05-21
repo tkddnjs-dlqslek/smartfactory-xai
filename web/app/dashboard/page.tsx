@@ -190,8 +190,12 @@ export default function DashboardPage() {
       <div className={"banner" + (isDanger ? " danger" : "")} style={!isDanger ? { borderColor: "var(--sx-border)", background: "var(--sx-surface-2)" } : {}}>
         <div className="ico">{isDanger ? "!" : "ⓘ"}</div>
         <div style={{ flex: 1 }}>
-          <div className="ttl">{isDanger ? `▲ ${statusKo} · 단일 모델 피로 → 4-AI 합의가 거짓 알람 71% 제거` : `● ${statusKo} · 4-AI 합의 ${r?.agree ?? 0}/4`}</div>
-          <div className="sub">{ack || (r ? `복원 오차 ${r.recon_error.toFixed(3)} · Soft ${r.soft.toFixed(3)} · DeepSHAP 100 ms · 처방 ${r.prescriptions.length}건 자동 생성됨` : "백엔드 연결 대기 중")}</div>
+          <div className="ttl">{isDanger
+            ? `▲ ${statusKo} · 4-AI ${r?.agree ?? 0}/4 합의 이상 감지 — 즉시 조치 필요`
+            : `● ${statusKo} · 4-AI 합의 ${r?.agree ?? 0}/4 · 이상 신호 없음`}</div>
+          <div className="sub">{ack || (r
+            ? `복원 오차 ${r.recon_error.toFixed(3)} (임계값 τ ${r.threshold.toFixed(3)}의 ${pctThr}%) · Soft ${r.soft.toFixed(3)}${isDanger && r.prescriptions[0] ? ` · 주원인 ${r.prescriptions[0].sensor} ${r.prescriptions[0].sigma} · 처방 ${r.prescriptions.length}건` : ""}`
+            : "백엔드 연결 대기 중")}</div>
         </div>
         <button className="btn danger" style={{ padding: "10px 14px" }} onClick={() => doAck(`✓ 처방 ${r?.prescriptions.length ?? 0}건 적용 요청 전송 — HMI 작업 지시 발행`)}>▶ 처방 적용</button>
         <button className="btn subtle" style={{ padding: "10px 14px" }} onClick={() => doAck("✓ 거짓 알람으로 표시됨 — Active Learning 재학습 큐에 반영")}>거짓 알람 표시</button>
