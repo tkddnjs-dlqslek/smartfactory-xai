@@ -266,16 +266,10 @@ export function DashShell({ activeTab, scenario = "정상", children, headline, 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div style={{ padding: "18px 24px 24px", display: "flex", flexDirection: "column", gap: 12, flex: 1 }}>
             {(headline || sub) && (
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 4 }}>
-                <div>
-                  <div className="eyebrow">TAB {activeTab.toString().padStart(2, "0")}</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4, marginTop: 6 }}>{headline}</div>
-                  {sub && <div style={{ fontSize: 11, color: "var(--sx-text-3)", fontWeight: 600, marginTop: 4 }}>{sub}</div>}
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <span className="tag real">실측</span>
-                  <span className="tag">95% CI Bootstrap n=1000</span>
-                </div>
+              <div style={{ marginBottom: 4 }}>
+                <div className="eyebrow">TAB {activeTab.toString().padStart(2, "0")}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.4, marginTop: 6 }}>{headline}</div>
+                {sub && <div style={{ fontSize: 11, color: "var(--sx-text-3)", fontWeight: 600, marginTop: 4 }}>{sub}</div>}
               </div>
             )}
             {children}
