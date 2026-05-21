@@ -73,6 +73,8 @@ export const api = {
     post<PredictResult>("/api/predict", { z, required_votes }),
   explain: (z: number[], top_n = 5) =>
     post<ExplainResult>("/api/explain", { z, top_n }),
+  report: (z: number[], tone: "worker" | "supervisor" | "director" = "worker") =>
+    post<{ text: string; model: string; cached: boolean }>("/api/report", { z, tone }),
   scenarios: () => get<{ scenarios: Scenario[] }>("/api/scenarios"),
   health: () => get<{ status: string; threshold: number; sensors: number }>("/api/health"),
   metrics: () => get<MetricsBundle>("/api/metrics"),

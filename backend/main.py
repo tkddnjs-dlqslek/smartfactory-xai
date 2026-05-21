@@ -7,11 +7,19 @@ import os
 import json
 from typing import List, Optional
 
+# .env 로드 (ANTHROPIC_API_KEY 등) — 프로젝트 루트의 .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+except Exception:
+    pass
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from .engine import get_engine, SENSOR_COLS, RESULT_DIR
+from . import report as report_mod
 
 app = FastAPI(title="SmartFactory XAI API", version="1.0")
 
@@ -75,6 +83,11 @@ class ExplainIn(BaseModel):
     top_n: Optional[int] = 5
 
 
+class ReportIn(BaseModel):
+    z: List[float]
+    tone: Optional[str] = "worker"  # worker | supervisor | director
+
+
 # ── 엔드포인트 ──
 @app.get("/api/health")
 def health():
@@ -113,6 +126,27 @@ def explain(body: ExplainIn):
         return get_engine().explain(body.z, top_n=body.top_n or 5)
     except Exception as e:
         raise HTTPException(500, f"explain failed: {e}")
+
+
+_STATUS_KO = {"NORMAL": "정상", "WARNING": "경고", "DANGER": "위험", "CRITICAL": "긴급"}
+
+
+@app.post("/api/report")
+def report(body: ReportIn):
+    if len(body.z) != 24:
+        raise HTTPException(400, f"센서 24개 필요, {len(body.z)}개 받음")
+    try:
+        pred = get_engine().predict(body.z)
+    except Exception as e:
+        raise HTTPException(500, f"predict failed: {e}")
+    # 이상 상위 센서 (처방 기반 top-3)
+    top = [{"name": p["sensor"], "sigma": p["sigma"]} for p in pred["prescriptions"]]
+    ctx = {
+        "status": pred["status"], "status_ko": _STATUS_KO.get(pred["status"], pred["status"]),
+        "recon_error": pred["recon_error"], "threshold": pred["threshold"], "ratio": pred["ratio"],
+        "agree": pred["agree"], "soft": pred["soft"], "top_sensors": top,
+    }
+    return report_mod.generate(ctx, tone=body.tone or "worker")
 
 
 @app.get("/api/metrics")

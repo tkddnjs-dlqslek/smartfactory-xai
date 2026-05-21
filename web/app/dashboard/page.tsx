@@ -75,6 +75,22 @@ export default function DashboardPage() {
   const wfBefore = r?.recon_error ?? 0;
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
+  // ── 자연어 진단 보고서 (Claude Haiku 라이브) ──
+  const [nlgTone, setNlgTone] = useState<"worker" | "supervisor" | "director">("worker");
+  const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);
+  const [nlgLoading, setNlgLoading] = useState(false);
+
+  useEffect(() => {
+    if (!baseZ) return;
+    let cancelled = false;
+    setNlgLoading(true);
+    api.report(baseZ, nlgTone)
+      .then((res) => { if (!cancelled) setNlg({ text: res.text, model: res.model }); })
+      .catch(() => { if (!cancelled) setNlg(null); })
+      .finally(() => { if (!cancelled) setNlgLoading(false); });
+    return () => { cancelled = true; };
+  }, [baseZ, nlgTone]);
+
   const sev = r?.severity ?? 0;
   const isDanger = sev >= 2;
   const gaugeState = sev >= 2 ? "danger" : sev === 1 ? "warn" : "normal";
@@ -258,17 +274,20 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">자연어 진단 보고서</span><span className="sub">3톤 · 정적</span></div>
+          <div className="h"><span className="ttl">자연어 진단 보고서</span><span className="sub">{nlg?.model === "template" ? "템플릿" : "Claude Haiku"} {nlgLoading ? "· 생성 중…" : ""}</span></div>
           <div className="b">
             <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-              <span className="tag cyan">작업자</span>
-              <span className="tag">반장</span>
-              <span className="tag">부서장</span>
+              {([["worker", "작업자"], ["supervisor", "반장"], ["director", "부서장"]] as const).map(([k, lbl]) => (
+                <button key={k} onClick={() => setNlgTone(k)} className="tag"
+                  style={{
+                    cursor: "pointer", border: "1px solid " + (nlgTone === k ? "var(--sx-cyan-bd)" : "var(--sx-border-2)"),
+                    background: nlgTone === k ? "var(--sx-cyan-bg)" : "transparent",
+                    color: nlgTone === k ? "var(--sx-cyan)" : "var(--sx-text-3)",
+                  }}>{lbl}</button>
+              ))}
             </div>
-            <div style={{ fontSize: 11.5, lineHeight: 1.65, color: "var(--sx-text-2)", fontWeight: 500 }}>
-              <p style={{ margin: "0 0 6px" }}><span style={{ color: "var(--sx-red-soft)", fontWeight: 700 }}>지금 라인이 {statusKo} 상태</span>입니다. IM-7에서 4개 AI 중 {r?.agree ?? 0}개가 동의 — 복원 오차 {r ? r.recon_error.toFixed(3) : "—"} (임계값의 {pctThr}%).</p>
-              <p style={{ margin: "0 0 6px" }}>상위 처방: <span style={{ color: "var(--sx-cyan)" }}>{r?.prescriptions[0]?.action || "—"}</span></p>
-              <p style={{ margin: 0, color: "var(--sx-text-3)" }}>과거 KAMP 동일 패턴 12건 모두 같은 처방으로 해결됐고, 평균 복구 4분 12초.</p>
+            <div style={{ fontSize: 11.5, lineHeight: 1.7, color: "var(--sx-text-2)", fontWeight: 500, minHeight: 60 }}>
+              {nlg ? nlg.text : (nlgLoading ? "보고서 생성 중…" : "분석 대기 중…")}
             </div>
           </div>
         </div>
