@@ -212,17 +212,7 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
       borderRight:"1px solid var(--sx-border)",
       display:"flex", flexDirection:"column", flexShrink:0
     }}>
-      <div style={{padding:"16px 18px 12px"}}>
-        <div className="eyebrow">통합 운영 플랫폼 / Platform</div>
-        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:6}}>
-          <div style={{fontSize:14, fontWeight:800}}>IM-7 사출성형 라인</div>
-          <span className="tag cyan">활성</span>
-        </div>
-        <div style={{fontSize:10, color:"var(--sx-text-3)", fontWeight:600, marginTop:3}}>품질·설비·안전·생산 통합 · KAMP 1,379 shots <span className="tag real" style={{marginLeft:4}}>실측</span></div>
-      </div>
-
-      <div className="hair"></div>
-      <div style={{padding:"10px 0"}}>
+      <div style={{padding:"14px 0 10px"}}>
         {pillars.map(pl => (
           <div key={pl.p} style={{marginBottom:6}}>
             <div className="eyebrow" style={{padding:"6px 18px 4px", color:pl.c}}>{pl.p}</div>

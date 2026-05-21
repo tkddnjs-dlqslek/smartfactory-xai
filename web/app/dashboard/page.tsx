@@ -86,17 +86,29 @@ export default function DashboardPage() {
   const wfBefore = r?.recon_error ?? 0;
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
-  // ── LIVE 스트리밍 (1Hz 자동 재예측) ──
+  // ── LIVE 스트리밍 (1Hz 자동 재예측 + 결과 누적) ──
   const [live, setLive] = useState(false);
   const [tick, setTick] = useState(0);
+  const [liveLog, setLiveLog] = useState<{ t: string; status: string; recon: number; agree: number; sensor: string; sigma: string }[]>([]);
   useEffect(() => liveStore.subscribe(setLive), []);
-  useEffect(() => { if (!live) setTick(0); }, [live]);
+  useEffect(() => { if (!live) { setTick(0); setLiveLog([]); } }, [live]);
   useEffect(() => {
     if (!live || !baseZ) return;
     const id = setInterval(async () => {
       // 현재 시나리오 기준 미세 드리프트(±0.1σ)로 라이브 센서 피드 흉내
       const drifted = baseZ.map((v) => v + (Math.random() - 0.5) * 0.2);
-      try { setR(await api.predict(drifted)); setTick((t) => t + 1); } catch { /* keep last */ }
+      try {
+        const res = await api.predict(drifted);
+        setR(res); setTick((t) => t + 1);
+        if (res.severity >= 2) {
+          const p0 = res.prescriptions[0];
+          setLiveLog((prev) => [{
+            t: new Date().toLocaleTimeString("ko-KR", { hour12: false }),
+            status: res.status, recon: res.recon_error, agree: res.agree,
+            sensor: p0?.sensor ?? "—", sigma: p0?.sigma ?? "",
+          }, ...prev].slice(0, 8));
+        }
+      } catch { /* keep last */ }
     }, 1000);
     return () => clearInterval(id);
   }, [live, baseZ]);
@@ -178,10 +190,10 @@ export default function DashboardPage() {
           <div className="val num">{r ? r.agree : 0}<span className="u">/ 4 모델</span></div>
           <div className="ci">AE · IF · OCSVM · LOF</div>
         </div>
-        <div className="kpi">
-          <div className="lbl">불량률 8h</div>
-          <div className="val num">0.83<span className="u">%</span></div>
-          <div className="ci">목표 ≤ 1.5% · 실측</div>
+        <div className={"kpi" + (live ? " red" : "")}>
+          <div className="lbl">LIVE 불량률</div>
+          <div className="val num">{live && tick ? ((liveLog.length / tick) * 100).toFixed(1) : "—"}<span className="u">%</span></div>
+          <div className="ci">{live ? `이상 ${liveLog.length} / ${tick}샷 누적` : "LIVE 스트리밍 시 집계"}</div>
         </div>
       </div>
 
@@ -319,16 +331,21 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">이상 감지 이력 · Active Learning</span><span className="sub">최근 5건 · 정적</span></div>
+          <div className="h"><span className="ttl">이상 감지 이력 · LIVE 누적</span><span className="sub">{live ? `스트리밍 중 · ${liveLog.length}건 감지` : "LIVE 시작 시 실시간 누적"}</span></div>
           <div className="b" style={{ padding: 0 }}>
             <table className="tbl">
-              <thead><tr><th>샷</th><th>심각도</th><th>주센서</th><th>처방</th><th>피드백</th></tr></thead>
+              <thead><tr><th>시각</th><th>상태</th><th>주센서</th><th>복원오차</th><th>합의</th></tr></thead>
               <tbody>
-                <tr><td>#1,248</td><td><span className="tag red">DEFECT</span></td><td>Nozzle +4.8σ</td><td>3건 적용</td><td><span className="tag cyan">정확</span></td></tr>
-                <tr><td>#1,189</td><td><span className="tag" style={{ color: "var(--sx-cyan)" }}>WARN</span></td><td>Hot_Runner +2.1σ</td><td>1건</td><td><span className="tag cyan">정확</span></td></tr>
-                <tr><td>#1,094</td><td><span className="tag" style={{ color: "var(--sx-cyan)" }}>WARN</span></td><td>Mold_B +1.9σ</td><td>모니터링</td><td><span className="tag">거짓</span></td></tr>
-                <tr><td>#0,991</td><td><span className="tag red">DEFECT</span></td><td>Filling +5.1σ</td><td>4건 적용</td><td><span className="tag cyan">정확</span></td></tr>
-                <tr><td>#0,884</td><td><span className="tag" style={{ color: "var(--sx-cyan)" }}>WARN</span></td><td>Cycle +1.6σ</td><td>관찰</td><td><span className="tag cyan">정확</span></td></tr>
+                {liveLog.map((e, i) => (
+                  <tr key={i}>
+                    <td className="num">{e.t}</td>
+                    <td><span className={"tag" + (e.status === "CRITICAL" || e.status === "DANGER" ? " red" : "")} style={e.status === "WARNING" ? { color: "var(--sx-cyan)" } : {}}>{STATUS_KO[e.status]}</span></td>
+                    <td>{e.sensor} {e.sigma}</td>
+                    <td className="num" style={{ color: "var(--sx-red-soft)" }}>{e.recon.toFixed(3)}</td>
+                    <td className="num">{e.agree}/4</td>
+                  </tr>
+                ))}
+                {!liveLog.length && <tr><td colSpan={5} style={{ color: "var(--sx-text-3)", padding: 14, textAlign: "center" }}>{live ? "이상 감지 대기 중…" : "▶ LIVE 스트리밍을 켜면 실시간 누적됩니다"}</td></tr>}
               </tbody>
             </table>
           </div>
