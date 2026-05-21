@@ -180,6 +180,12 @@ def causal():
     return _load_json("causal_graph.json") or {}
 
 
+@app.get("/api/validation")
+def validation():
+    # τ 민감도 시뮬레이션용 — 현재 모델 실측 per-shot 점수(1,379샷)
+    return _load_json("val_scores.json") or {}
+
+
 @app.get("/api/pca")
 def pca():
     return _load_json("pca_data.json") or {}

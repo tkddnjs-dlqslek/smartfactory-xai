@@ -85,4 +85,5 @@ export const api = {
   batch: () => get<BatchBundle>("/api/batch"),
   pca: () => get<any>("/api/pca"),
   causal: () => get<any>("/api/causal"),
+  validation: () => get<{ errors: number[]; labels: number[]; n: number; n_defect: number; err_min: number; err_max: number; note: string }>("/api/validation"),
 };

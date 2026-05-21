@@ -29,14 +29,34 @@ export default function BatchPage() {
   const [m, setM] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  // τ 민감도 시뮬레이션 — 현재 모델 실측 per-shot 점수
+  const [vs, setVs] = useState<{ errors: number[]; labels: number[]; err_min: number; err_max: number } | null>(null);
+  const [tau, setTau] = useState(0.32);
+
   useEffect(() => {
     api.metrics().then((b: MetricsBundle) => { setCm(b.ensemble?.ae_alone); setM(b.metrics); })
       .catch((e) => setErr(e.message || "지표 연결 실패"));
+    api.validation().then(setVs).catch(() => {});
   }, []);
 
   const total = cm ? cm.tp + cm.fp + cm.fn + cm.tn : null;
   const nDefect = cm ? cm.tp + cm.fn : null;
   const nNormal = cm ? cm.tn + cm.fp : null;
+
+  // 슬라이더 τ에서 실시간 혼동행렬 재계산
+  const sim = React.useMemo(() => {
+    if (!vs) return null;
+    let tp = 0, fp = 0, fn = 0, tn = 0;
+    for (let i = 0; i < vs.errors.length; i++) {
+      const pred = vs.errors[i] >= tau ? 1 : 0;
+      const y = vs.labels[i];
+      if (pred && y) tp++; else if (pred && !y) fp++; else if (!pred && y) fn++; else tn++;
+    }
+    const prec = tp + fp ? tp / (tp + fp) : 0;
+    const rec = tp + fn ? tp / (tp + fn) : 0;
+    const f1 = prec + rec ? (2 * prec * rec) / (prec + rec) : 0;
+    return { tp, fp, fn, tn, prec, rec, f1 };
+  }, [vs, tau]);
 
   return (
     <DashShell activeTab={3} scenario="정상"
@@ -52,29 +72,49 @@ export default function BatchPage() {
 
       <div className="card">
         <div className="h">
-          <span className="ttl">검증셋 시계열 · 1,379샷 복원 오차</span>
-          <span className="sub">τ = 0.184 (이동) · 임계값 슬라이더로 즉시 재계산</span>
+          <span className="ttl">τ 민감도 시뮬레이션 · 현재 모델 실측 {vs ? vs.errors.length.toLocaleString() : "1,379"}샷</span>
+          <span className="sub">슬라이더를 움직이면 혼동행렬이 실시간 재계산 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
         </div>
         <div className="b">
           <svg viewBox="0 0 1300 200" preserveAspectRatio="none" style={{ width: "100%", height: 200, display: "block" }}>
-            <line x1="0" y1={200 - 0.184 / 0.6 * 180} x2="1300" y2={200 - 0.184 / 0.6 * 180} stroke="var(--sx-red)" strokeWidth="0.6" strokeDasharray="3 2" />
-            <text x="1295" y={200 - 0.184 / 0.6 * 180 - 4} fill="var(--sx-red-soft)" fontSize="9" fontWeight="700" textAnchor="end">τ 0.184</text>
-            {NORMAL_PTS.map((p, i) => (
-              <circle key={"n" + i} cx={p.x} cy={p.y} r="0.9" fill="var(--sx-text-3)" opacity="0.6" />
-            ))}
-            {ANOMS.map((a, i) => (
-              <circle key={"a" + i} cx={(a.i / 1379) * 1300} cy={200 - a.v / 0.6 * 180} r="2.5" fill="var(--sx-red)" />
-            ))}
+            {vs && (() => {
+              const lo = vs.err_min, hi = vs.err_max, rng = (hi - lo) || 1;
+              const yOf = (e: number) => 190 - ((e - lo) / rng) * 180;
+              const tY = yOf(tau);
+              return (
+                <>
+                  <line x1="0" y1={tY} x2="1300" y2={tY} stroke="var(--sx-red)" strokeWidth="0.8" strokeDasharray="3 2" />
+                  <text x="1295" y={tY - 4} fill="var(--sx-red-soft)" fontSize="9" fontWeight="700" textAnchor="end">τ {tau.toFixed(3)}</text>
+                  {vs.errors.map((e, i) => {
+                    const over = e >= tau, defect = vs.labels[i] === 1;
+                    return <circle key={i} cx={(i / vs.errors.length) * 1300} cy={yOf(e)} r={defect ? 2.2 : 0.8}
+                      fill={defect ? "var(--sx-red)" : (over ? "#FFA756" : "var(--sx-text-3)")} opacity={defect ? 0.95 : (over ? 0.7 : 0.45)} />;
+                  })}
+                </>
+              );
+            })()}
+            {!vs && <text x="650" y="100" fill="var(--sx-text-3)" fontSize="12" textAnchor="middle">시뮬레이션 데이터 로딩…</text>}
           </svg>
           <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 14 }}>
             <span className="eyebrow">임계값 τ</span>
-            <div style={{ flex: 1, position: "relative", height: 6, background: "var(--sx-surface-3)" }}>
-              <div style={{ position: "absolute", left: 0, height: "100%", width: "30%", background: "var(--sx-cyan-bg-2)" }}></div>
-              <div style={{ position: "absolute", left: "30%", height: "100%", right: 0, background: "var(--sx-red-bg-2)" }}></div>
-              <div style={{ position: "absolute", left: "30%", top: -4, width: 14, height: 14, background: "var(--sx-cyan)", transform: "translateX(-50%)" }}></div>
+            <input type="range" min={vs ? vs.err_min : 0.1} max={vs ? vs.err_max : 0.9} step={0.005} value={tau}
+              onChange={(e) => setTau(Number(e.target.value))}
+              style={{ flex: 1, accentColor: "var(--sx-cyan)", cursor: "pointer" }} />
+            <span className="num" style={{ fontWeight: 800, color: "var(--sx-cyan)", minWidth: 46 }}>{tau.toFixed(3)}</span>
+          </div>
+          {sim && (
+            <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 }}>
+              {([["TP", sim.tp, "var(--sx-cyan)"], ["FP", sim.fp, "#FFA756"], ["FN", sim.fn, "var(--sx-red-soft)"], ["TN", sim.tn, "var(--sx-text-2)"],
+                 ["Precision", sim.prec.toFixed(3), "var(--sx-cyan)"], ["Recall", sim.rec.toFixed(3), "var(--sx-text)"], ["F1", sim.f1.toFixed(3), "var(--sx-cyan)"]] as any[]).map(([k, v, c]) => (
+                <div key={k} style={{ textAlign: "center" }}>
+                  <div className="eyebrow">{k}</div>
+                  <div className="num" style={{ fontSize: 15, fontWeight: 800, color: c }}>{typeof v === "number" ? v.toLocaleString() : v}</div>
+                </div>
+              ))}
             </div>
-            <span className="num" style={{ fontWeight: 800, color: "var(--sx-cyan)" }}>0.184</span>
-            <span className="tag cyan">F1 0.7324</span>
+          )}
+          <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 8, lineHeight: 1.5 }}>
+            ● 빨강=실제 불량 · ● 주황=정상인데 τ 초과(거짓경보) · ● 회색=정상. 아래 공식 혼동행렬(τ 고정)과 별개인 민감도 분석입니다.
           </div>
         </div>
       </div>
@@ -105,7 +145,7 @@ export default function BatchPage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">현재 τ 기준 혼동 행렬</span><span className="sub">τ = 0.184 · F1 0.7324</span></div>
+          <div className="h"><span className="ttl">공식 검증 혼동 행렬 · τ 고정</span><span className="sub">발표 기준 실측 · F1 0.7324 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span></div>
           <div className="b">
             <div style={{ display: "grid", gridTemplateColumns: "56px 1fr 1fr", gridTemplateRows: "24px 1fr 1fr", gap: 4 }}>
               <div></div>
