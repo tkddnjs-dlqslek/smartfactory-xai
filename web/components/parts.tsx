@@ -66,7 +66,7 @@ export function Consensus({ votes = [1,1,1,0], scores = [0.412, 0.622, 0.511, 1.
 }
 
 /* ───── semicircle gauge ───── */
-export function Gauge({ value = 0.412, threshold = 0.184, label = "RECON ERROR", state = "danger" }: any) {
+export function Gauge({ value = 0.412, threshold = 0.320, label = "RECON ERROR", state = "danger" }: any) {
   const max = 0.6;
   const v = Math.min(1, value / max);
   const t = threshold / max;

@@ -125,7 +125,7 @@ export default function BatchPage() {
           )}
           <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 8, lineHeight: 1.5 }}>
             ● 빨강=실제 불량 · ● 주황=정상인데 τ 초과(거짓경보) · ● 회색=정상.<br />
-            ※ 아래 <b>공식 혼동행렬</b>은 발표 기준 검증 스냅샷(실측 고정), 본 시뮬레이션은 <b>현재 배포 모델</b> 점수 기준이라 수치가 다릅니다 — τ 트레이드오프 시연용.
+            ※ τ={tau.toFixed(3)}(헤드라인 임계)에서 이 시뮬은 공식 혼동행렬(TN1334/FP6/FN13/TP26)을 그대로 재현합니다. 슬라이더로 τ를 바꿔 미탐↔거짓경보 트레이드오프를 확인하세요.
           </div>
         </div>
       </div>

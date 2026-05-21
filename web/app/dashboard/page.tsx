@@ -15,8 +15,11 @@ export default function DashboardPage() {
   const [sel, setSel] = useState(0);
   const [r, setR] = useState<PredictResult | null>(null);
   const [baseR, setBaseR] = useState<PredictResult | null>(null);  // 시나리오 고정 baseline (스트리밍과 독립)
+  const [ens, setEns] = useState<any>(null);  // 실측 합의 비교 (ensemble_metrics)
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => { api.metrics().then((b) => setEns(b.ensemble)).catch(() => {}); }, []);
 
   // 시나리오 로드 + 기본(긴급#37) 예측
   useEffect(() => {
@@ -202,7 +205,7 @@ export default function DashboardPage() {
         </div>
         <div className={"kpi" + (isDanger ? " red" : "")}>
           <div className="lbl">복원 오차</div>
-          <div className="val num">{r ? r.recon_error.toFixed(3) : "—"}<span className="u">/ τ {r ? r.threshold.toFixed(3) : "0.184"}</span></div>
+          <div className="val num">{r ? r.recon_error.toFixed(3) : "—"}<span className="u">/ τ {r ? r.threshold.toFixed(3) : "0.320"}</span></div>
           <div className="ci">{pctThr}% of threshold · 실측</div>
         </div>
         <div className="kpi cyan">
@@ -240,7 +243,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="h">
               <span className="ttl">⚑ 다중 AI 합의 미터 · 4 모델</span>
-              <span className="sub">단일 AE FP rate 0.66 → 4-AI 합의 0.19 (−71%)</span>
+              <span className="sub">{ens ? `느슨 ≥1/4 FP ${ens.consensus_modes[">=1of4"].fp} → ≥3/4 FP ${ens.consensus_modes[">=3of4"].fp} (거짓경보 ↓)` : "AE·IF·OCSVM·LOF 합의"}</span>
             </div>
             <div className="b">
               <Consensus
@@ -253,11 +256,19 @@ export default function DashboardPage() {
                 background: "var(--sx-cyan-bg)", border: "1px dashed var(--sx-cyan-bd)"
               }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--sx-cyan)", letterSpacing: 0.4 }}>
-                  ⓘ 단일 모델 알람 피로 → 4-AI 합의로 해소
+                  ⓘ 단일 모델 거짓경보 → 4-AI 합의로 해소 (검증 1,379샷 실측)
                 </div>
-                <div style={{ fontSize: 10.5, color: "var(--sx-text-3)", fontWeight: 600, marginTop: 4, lineHeight: 1.5 }}>
-                  AE 단독 운영 시 24h 알람 47건 (FP 31건, 66%). 4-AI ≥3/4 엄격 모드로 전환 후 알람 11건 (FP 2건, 18%). 작업자 응답 시간 142s → 38s.
-                </div>
+                {ens ? (() => {
+                  const u = ens.consensus_modes[">=1of4"], h = ens.consensus_modes[">=3of4"];
+                  const drop = u.fp ? Math.round((1 - h.fp / u.fp) * 100) : 0;
+                  return (
+                    <div style={{ fontSize: 10.5, color: "var(--sx-text-3)", fontWeight: 600, marginTop: 4, lineHeight: 1.5 }}>
+                      아무 모델이나 1개 발동(≥1/4) 시 거짓경보 {u.fp}건·정밀도 {u.precision.toFixed(2)}. ≥3/4 엄격 합의로 전환하면 거짓경보 {h.fp}건(−{drop}%)·정밀도 {h.precision.toFixed(2)}·재현율 {h.recall.toFixed(2)}. 한 모델이 틀려도 견고.
+                    </div>
+                  );
+                })() : (
+                  <div style={{ fontSize: 10.5, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 4 }}>합의 지표 로딩 중…</div>
+                )}
               </div>
             </div>
           </div>
@@ -276,9 +287,9 @@ export default function DashboardPage() {
         {/* RIGHT */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: 0 }}>
           <div className="card">
-            <div className="h"><span className="ttl">복원 오차 · 게이지</span><span className="sub">τ {r ? r.threshold.toFixed(3) : "0.184"}</span></div>
+            <div className="h"><span className="ttl">복원 오차 · 게이지</span><span className="sub">τ {r ? r.threshold.toFixed(3) : "0.320"}</span></div>
             <div className="b">
-              <Gauge value={r ? r.recon_error : 0} threshold={r ? r.threshold : 0.184} state={gaugeState} />
+              <Gauge value={r ? r.recon_error : 0} threshold={r ? r.threshold : 0.320} state={gaugeState} />
             </div>
           </div>
 
