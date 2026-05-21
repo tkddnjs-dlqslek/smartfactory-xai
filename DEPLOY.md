@@ -12,6 +12,7 @@
      Build `pip install -r backend/requirements.txt`,
      Start `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`,
      Health Check Path `/api/health`, 환경변수 `PYTHON_VERSION=3.11.9`)
+   - **환경변수 `ANTHROPIC_API_KEY` 추가** (자연어 보고서 NLG용) — Render 대시보드 Environment 탭. 없으면 NLG는 템플릿 폴백으로 동작(나머지 기능은 정상)
 3. 빌드 5~10분 (torch CPU 휠 설치). 완료 후 URL 확인 (예: `https://smartfactory-xai-api.onrender.com`)
 4. 검증: 브라우저로 `<URL>/api/health` → `{"status":"ok",...}`
 
