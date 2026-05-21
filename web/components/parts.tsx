@@ -239,21 +239,6 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
         ))}
       </div>
 
-      <div className="hair"></div>
-      <div style={{padding:"14px 18px"}}>
-        <div className="eyebrow" style={{marginBottom:8}}>24h 누적 KPI</div>
-        {[
-          { l:"감지 이상",   v:"42",  c:"var(--sx-red-soft)", r:"실측" },
-          { l:"처방 채택",   v:"87%", c:"var(--sx-cyan)",     r:"실측" },
-          { l:"평균 복구",   v:"4:48",c:"var(--sx-text)",     r:"실측" },
-          { l:"라인 정지",   v:"00:00",c:"var(--sx-cyan)",    r:"실측" },
-        ].map(k => (
-          <div key={k.l} style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", padding:"4px 0", fontSize:10.5}}>
-            <span style={{color:"var(--sx-text-3)", fontWeight:700, letterSpacing:0.4}}>{k.l}</span>
-            <span><span className="num" style={{color:k.c, fontWeight:800}}>{k.v}</span><span className="tag real" style={{marginLeft:4, fontSize:8, padding:"1px 3px"}}>{k.r}</span></span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
