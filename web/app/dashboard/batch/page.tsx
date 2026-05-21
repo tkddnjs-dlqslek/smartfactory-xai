@@ -6,13 +6,6 @@ import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
 import { api, MetricsBundle } from "@/lib/api";
 
-const ANOMS = [
-  { i: 120, v: 0.41 }, { i: 230, v: 0.32 }, { i: 345, v: 0.51 },
-  { i: 512, v: 0.28 }, { i: 618, v: 0.38 }, { i: 740, v: 0.44 },
-  { i: 880, v: 0.36 }, { i: 990, v: 0.55 }, { i: 1080, v: 0.29 },
-  { i: 1180, v: 0.47 }, { i: 1250, v: 0.39 }, { i: 1295, v: 0.42 },
-];
-
 const TOP20 = [
   { r: 1, s: "#0,991", t: "2026-05-12 09:34", re: 0.553, so: 0.984, m: "Filling +5.1σ", sh: 0.291, gt: "DEFECT", pr: "DEFECT" },
   { r: 2, s: "#1,248", t: "2026-05-19 14:32", re: 0.412, so: 0.957, m: "Nozzle +4.8σ", sh: 0.310, gt: "DEFECT", pr: "DEFECT" },
@@ -73,7 +66,7 @@ export default function BatchPage() {
       <div className="card">
         <div className="h">
           <span className="ttl">τ 민감도 시뮬레이션 · 현재 모델 실측 {vs ? vs.errors.length.toLocaleString() : "1,379"}샷</span>
-          <span className="sub">슬라이더를 움직이면 혼동행렬이 실시간 재계산 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span>
+          <span className="sub">슬라이더를 움직이면 혼동행렬이 실시간 재계산 <span className="tag" style={{ marginLeft: 4, color: "#FFA756" }}>LIVE 모델</span></span>
         </div>
         <div className="b">
           <svg viewBox="0 0 1300 200" preserveAspectRatio="none" style={{ width: "100%", height: 200, display: "block" }}>
@@ -114,7 +107,8 @@ export default function BatchPage() {
             </div>
           )}
           <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 8, lineHeight: 1.5 }}>
-            ● 빨강=실제 불량 · ● 주황=정상인데 τ 초과(거짓경보) · ● 회색=정상. 아래 공식 혼동행렬(τ 고정)과 별개인 민감도 분석입니다.
+            ● 빨강=실제 불량 · ● 주황=정상인데 τ 초과(거짓경보) · ● 회색=정상.<br />
+            ※ 아래 <b>공식 혼동행렬</b>은 발표 기준 검증 스냅샷(실측 고정), 본 시뮬레이션은 <b>현재 배포 모델</b> 점수 기준이라 수치가 다릅니다 — τ 트레이드오프 시연용.
           </div>
         </div>
       </div>
@@ -182,17 +176,3 @@ export default function BatchPage() {
     </DashShell>
   );
 }
-
-/* 시계열 정상 점군 — 고정 시드 좌표 (하이드레이션 안전) */
-const mulberry32 = (seed: number) => () => {
-  seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
-const _r = mulberry32(1379);
-const NORMAL_PTS = Array.from({ length: 350 }, (_, i) => {
-  const x = (i / 349) * 1300;
-  const v = 0.07 + Math.sin(i * 0.18) * 0.025 + _r() * 0.03;
-  return { x, y: 200 - v / 0.6 * 180 };
-});
