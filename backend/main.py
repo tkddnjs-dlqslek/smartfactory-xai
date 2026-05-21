@@ -34,23 +34,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── 데모 시나리오 (z-score, 실측 KAMP 불량 사례) ──
+# ── 데모 시나리오 (z-score) — 이름=실제 판정 등급에 1:1 매칭 ──
+# 경고#8×0.90→WARNING, 위험#27×0.60→DANGER, 긴급#37→CRITICAL (현재 모델 기준 검증)
 _SCENARIO_Z = {
-    "정상 운영": {},
-    "경고 #8 (162%)": {
-        "Injection_Time": 0.85, "Filling_Time": 1.54, "Plasticizing_Time": -1.21,
-        "Cycle_Time": -1.63, "Max_Injection_Speed": -2.75, "Max_Screw_RPM": -1.24,
-        "Average_Screw_RPM": 1.31, "Max_Switch_Over_Pressure": 1.33,
-        "Barrel_Temperature_6": -1.32, "Hopper_Temperature": -0.88,
-        "Mold_Temperature_3": -1.25, "Mold_Temperature_4": -1.15,
+    "정상": {},
+    "경고": {  # 경고#8 × 0.90 → WARNING
+        "Injection_Time": 0.765, "Filling_Time": 1.386, "Plasticizing_Time": -1.089,
+        "Cycle_Time": -1.467, "Max_Injection_Speed": -2.475, "Max_Screw_RPM": -1.116,
+        "Average_Screw_RPM": 1.179, "Max_Switch_Over_Pressure": 1.197,
+        "Barrel_Temperature_6": -1.188, "Hopper_Temperature": -0.792,
+        "Mold_Temperature_3": -1.125, "Mold_Temperature_4": -1.035,
     },
-    "위험 #27 (523%)": {
-        "Injection_Time": -0.87, "Filling_Time": -1.29, "Plasticizing_Position": 0.70,
-        "Max_Injection_Speed": 6.56, "Max_Screw_RPM": 1.60, "Average_Screw_RPM": 1.32,
-        "Max_Switch_Over_Pressure": 0.59, "Max_Back_Pressure": -1.00,
-        "Mold_Temperature_3": 2.61, "Mold_Temperature_4": 3.12,
+    "위험": {  # 위험#27 × 0.60 → DANGER
+        "Injection_Time": -0.522, "Filling_Time": -0.774, "Plasticizing_Position": 0.42,
+        "Max_Injection_Speed": 3.936, "Max_Screw_RPM": 0.96, "Average_Screw_RPM": 0.792,
+        "Max_Switch_Over_Pressure": 0.354, "Max_Back_Pressure": -0.60,
+        "Mold_Temperature_3": 1.566, "Mold_Temperature_4": 1.872,
     },
-    "긴급 #37 (978%)": {
+    "긴급": {  # 긴급#37 → CRITICAL
         "Injection_Time": 2.79, "Filling_Time": 4.82, "Plasticizing_Time": -1.00,
         "Cycle_Time": 2.53, "Max_Injection_Speed": -7.53, "Average_Screw_RPM": 1.32,
         "Max_Switch_Over_Pressure": 3.71, "Max_Back_Pressure": 8.45,
