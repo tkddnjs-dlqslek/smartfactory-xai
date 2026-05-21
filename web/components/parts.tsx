@@ -16,7 +16,7 @@ export const TAB_ROUTES: Record<number, string> = {
 };
 
 /* ───── 4-AI Consensus Meter ───── */
-export function Consensus({ votes = [1,1,1,0], scores = [0.412, 0.622, 0.511, 1.18], soft = 0.957, dense = false }: any) {
+export function Consensus({ votes = [1,1,1,0], scores = [0.412, 0.622, 0.511, 1.18], dense = false }: any) {
   const models = [
     { id: "AE",    auc: 0.9254 },
     { id: "IF",    auc: 0.9571 },
@@ -42,23 +42,9 @@ export function Consensus({ votes = [1,1,1,0], scores = [0.412, 0.622, 0.511, 1.
         ))}
       </div>
       {!dense && (
-        <div style={{marginTop:10}}>
-          <div style={{display:"flex", justifyContent:"space-between", fontSize:9.5, fontWeight:700, color:"var(--sx-text-3)", letterSpacing:0.6, textTransform:"uppercase", marginBottom:5}}>
-            <span>AUC-가중 SOFT VOTING</span>
-            <span className="num" style={{color:"var(--sx-red-soft)"}}>{soft.toFixed(4)} <span className="tag real" style={{marginLeft:4}}>실측</span></span>
-          </div>
-          <div className="bar" style={{height:10}}>
-            <i className="red" style={{width:`${Math.min(100, soft*100)}%`}}></i>
-          </div>
-          <div style={{display:"flex", justifyContent:"space-between", fontSize:9, color:"var(--sx-text-4)", fontWeight:600, marginTop:4}}>
-            <span>0.00</span>
-            <span>합의 임계 0.5</span>
-            <span>1.00</span>
-          </div>
-          <div style={{marginTop:8, display:"flex", justifyContent:"space-between", fontSize:10, color:"var(--sx-text-3)", fontWeight:700}}>
-            <span>합의 모드: <span style={{color:"var(--sx-red-soft)"}}>≥3/4 엄격</span> · 동의 {agree}/4</span>
-            <span>판정: <span style={{color: agree>=3 ? "var(--sx-red-soft)" : "var(--sx-text-2)"}}>{agree>=3 ? "▲ DEFECT" : "● NORMAL"}</span></span>
-          </div>
+        <div style={{marginTop:12, paddingTop:10, borderTop:"1px solid var(--sx-border)", display:"flex", justifyContent:"space-between", fontSize:10.5, color:"var(--sx-text-3)", fontWeight:700}}>
+          <span>합의 모드: <span style={{color:"var(--sx-red-soft)"}}>≥3/4 엄격</span> · 동의 {agree}/4 발동</span>
+          <span>판정: <span style={{color: agree>=3 ? "var(--sx-red-soft)" : "var(--sx-text-2)"}}>{agree>=3 ? "▲ 이상(DEFECT)" : "● 정상(NORMAL)"}</span></span>
         </div>
       )}
     </div>

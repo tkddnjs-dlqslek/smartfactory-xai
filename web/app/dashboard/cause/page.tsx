@@ -63,16 +63,17 @@ export default function CausePage() {
     return { effect, sigma: top[0].sigma, rel, meta: causal.meta };
   }, [causal, top]);
 
-  // 실측 PCA 좌표 → SVG 스케일 (정상 6697 서브샘플 + 불량 39 전체)
+  // 실측 PCA 좌표 → SVG 스케일. 2~98 percentile로 축 잡아 아웃라이어가 클러스터를 누르지 않게.
   const pcaPts = (() => {
     if (!pca?.normal_pc1) return null;
     const allX = [...pca.normal_pc1, ...pca.defect_pc1];
     const allY = [...pca.normal_pc2, ...pca.defect_pc2];
-    const xmin = Math.min(...allX), xmax = Math.max(...allX);
-    const ymin = Math.min(...allY), ymax = Math.max(...allY);
-    const sx = (v: number) => 24 + ((v - xmin) / (xmax - xmin + 1e-9)) * 412;
-    const sy = (v: number) => 196 - ((v - ymin) / (ymax - ymin + 1e-9)) * 184;
-    const step = Math.ceil(pca.normal_pc1.length / 280);
+    const pc = (arr: number[], p: number) => { const s = [...arr].sort((a, b) => a - b); return s[Math.floor((s.length - 1) * p)]; };
+    const xmin = pc(allX, 0.02), xmax = pc(allX, 0.98), ymin = pc(allY, 0.02), ymax = pc(allY, 0.98);
+    const cl = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+    const sx = (v: number) => 40 + ((cl(v, xmin, xmax) - xmin) / (xmax - xmin + 1e-9)) * 396;
+    const sy = (v: number) => 196 - ((cl(v, ymin, ymax) - ymin) / (ymax - ymin + 1e-9)) * 176;
+    const step = Math.ceil(pca.normal_pc1.length / 320);
     const normal: [number, number][] = [];
     for (let i = 0; i < pca.normal_pc1.length; i += step) normal.push([sx(pca.normal_pc1[i]), sy(pca.normal_pc2[i])]);
     const defect: [number, number][] = pca.defect_pc1.map((v: number, i: number) => [sx(v), sy(pca.defect_pc2[i])]);
@@ -148,9 +149,9 @@ export default function CausePage() {
                       </g>
                     );
                   })}
-                  {/* 예측 종점 마커 */}
-                  <circle cx={x0 + (top.length - 1) * gap + bw} cy={yOf(pred)} r="3" fill="var(--sx-red)" />
-                  <text x="444" y={Math.min(Math.max(yOf(pred) - 6, TOP - 24), BOT - 4)} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="end">예측 {pred.toFixed(3)}</text>
+                  {/* 예측 종점 마커 (값은 카드 헤더에 표시) */}
+                  <circle cx={x0 + (top.length - 1) * gap + bw} cy={yOf(pred)} r="3.5" fill="var(--sx-red)" />
+                  <text x={x0 + (top.length - 1) * gap + bw} y={yOf(pred) < TOP + 20 ? yOf(pred) + 16 : yOf(pred) - 8} fill="var(--sx-red-soft)" fontSize="8.5" fontWeight="800" textAnchor="middle">예측</text>
                 </>);
               })()}
               {(!top.length || recon === null) && <text x="230" y="120" fill="var(--sx-text-3)" fontSize="11" textAnchor="middle">계산 중…</text>}
@@ -205,19 +206,22 @@ export default function CausePage() {
         <div className="card">
           <div className="h"><span className="ttl">PCA 클러스터 · 정상 vs 이상</span><span className="sub">{pcaPts ? `설명분산 ${(pcaPts.ev[0] * 100).toFixed(0)}%+${(pcaPts.ev[1] * 100).toFixed(0)}%` : "로딩"}</span></div>
           <div className="b">
-            <svg viewBox="0 0 460 220" style={{ width: "100%", height: 220, display: "block" }}>
-              <line x1="20" y1="200" x2="440" y2="200" stroke="var(--sx-border)" strokeWidth="0.5" />
-              <line x1="20" y1="10" x2="20" y2="200" stroke="var(--sx-border)" strokeWidth="0.5" />
+            <svg viewBox="0 0 460 224" style={{ width: "100%", height: 224, display: "block" }}>
+              <line x1="40" y1="196" x2="436" y2="196" stroke="var(--sx-border-2)" strokeWidth="0.6" />
+              <line x1="40" y1="16" x2="40" y2="196" stroke="var(--sx-border-2)" strokeWidth="0.6" />
               {pcaPts?.normal.map((p, i) => (
-                <circle key={"n" + i} cx={p[0]} cy={p[1]} r="1.3" fill="#C8C8CD" opacity="0.45" />
+                <circle key={"n" + i} cx={p[0]} cy={p[1]} r="1.4" fill="#C8C8CD" opacity="0.4" />
               ))}
               {pcaPts?.defect.map((p, i) => (
-                <circle key={"a" + i} cx={p[0]} cy={p[1]} r="2.2" fill="#D42121" opacity="0.85" />
+                <circle key={"a" + i} cx={p[0]} cy={p[1]} r="3" fill="#D42121" opacity="0.9" stroke="#fff" strokeWidth="0.4" />
               ))}
-              <text x="440" y="14" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="end">PC1 →</text>
-              <text x="100" y="26" fill="#C8C8CD" fontSize="10" fontWeight="700">정상 n={pca?.n_normal ?? "—"}</text>
-              <text x="300" y="26" fill="#FF5A4A" fontSize="10" fontWeight="700">이상 n={pca?.n_defect ?? "—"}</text>
-              {!pcaPts && <text x="230" y="110" fill="var(--sx-text-3)" fontSize="10" fontWeight="700" textAnchor="middle">PCA 로딩 중…</text>}
+              <text x="436" y="212" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="end">PC1 ({pcaPts ? (pcaPts.ev[0] * 100).toFixed(0) : "—"}%) →</text>
+              <text x="14" y="106" fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle" transform="rotate(-90 14 106)">PC2 ({pcaPts ? (pcaPts.ev[1] * 100).toFixed(0) : "—"}%) →</text>
+              {/* 범례 (좌상단 박스) */}
+              <rect x="48" y="22" width="146" height="34" fill="var(--sx-surface)" stroke="var(--sx-border)" strokeWidth="0.5" opacity="0.9" />
+              <circle cx="58" cy="33" r="3" fill="#C8C8CD" /><text x="66" y="36" fill="var(--sx-text-2)" fontSize="9" fontWeight="700">정상 n={pca?.n_normal ?? "—"}</text>
+              <circle cx="58" cy="47" r="3.5" fill="#D42121" stroke="#fff" strokeWidth="0.4" /><text x="66" y="50" fill="var(--sx-red-soft)" fontSize="9" fontWeight="700">이상(불량) n={pca?.n_defect ?? "—"}</text>
+              {!pcaPts && <text x="238" y="110" fill="var(--sx-text-3)" fontSize="10" fontWeight="700" textAnchor="middle">PCA 로딩 중…</text>}
             </svg>
           </div>
         </div>

@@ -204,19 +204,19 @@ export default function DashboardPage() {
           <div className="ci">{live ? "● 실시간 갱신 중" : (r ? "최신 진단 기준" : "—")}</div>
         </div>
         <div className={"kpi" + (isDanger ? " red" : "")}>
-          <div className="lbl">복원 오차</div>
+          <div className="lbl">복원 오차 (AE)</div>
           <div className="val num">{r ? r.recon_error.toFixed(3) : "—"}<span className="u">/ τ {r ? r.threshold.toFixed(3) : "0.320"}</span></div>
           <div className="ci">{pctThr}% of threshold · 실측</div>
         </div>
         <div className="kpi cyan">
-          <div className="lbl">4-AI 소프트</div>
-          <div className="val num">{r ? r.soft.toFixed(3) : "—"}</div>
-          <div className="ci">≥{r?.required ?? 3}/4 엄격 모드</div>
+          <div className="lbl">4-AI 합의 투표</div>
+          <div className="val num">{r ? r.agree : 0}<span className="u">/ 4 모델</span></div>
+          <div className="ci">≥{r?.required ?? 3}/4 → 이상 판정</div>
         </div>
         <div className="kpi">
-          <div className="lbl">합의 투표</div>
-          <div className="val num">{r ? r.agree : 0}<span className="u">/ 4 모델</span></div>
-          <div className="ci">AE · IF · OCSVM · LOF</div>
+          <div className="lbl">강도 등급</div>
+          <div className="val" style={{ fontSize: 18, marginTop: 12 }}>{statusKo}</div>
+          <div className="ci">AE 복원오차 {r ? r.ratio.toFixed(1) : "—"}× τ</div>
         </div>
         <div className={"kpi" + (live ? " red" : "")}>
           <div className="lbl">LIVE 불량률</div>
@@ -232,7 +232,7 @@ export default function DashboardPage() {
             ? `▲ ${statusKo} · 4-AI ${r?.agree ?? 0}/4 합의 이상 감지 — 즉시 조치 필요`
             : `● ${statusKo} · 4-AI 합의 ${r?.agree ?? 0}/4 · 이상 신호 없음`}</div>
           <div className="sub">{r
-            ? `복원 오차 ${r.recon_error.toFixed(3)} (임계값 τ ${r.threshold.toFixed(3)}의 ${pctThr}%) · Soft ${r.soft.toFixed(3)}${isDanger && r.prescriptions[0] ? ` · 주원인 ${r.prescriptions[0].sensor} ${r.prescriptions[0].sigma} · 처방 ${r.prescriptions.length}건` : ""}`
+            ? `복원 오차 ${r.recon_error.toFixed(3)} (임계값 τ ${r.threshold.toFixed(3)}의 ${pctThr}%) · 합의 ${r.agree}/4${isDanger && r.prescriptions[0] ? ` · 주원인 ${r.prescriptions[0].sensor} ${r.prescriptions[0].sigma} · 처방 ${r.prescriptions.length}건` : ""}`
             : "백엔드 연결 대기 중"}</div>
         </div>
       </div>
@@ -249,7 +249,6 @@ export default function DashboardPage() {
               <Consensus
                 votes={r ? r.votes : [0, 0, 0, 0]}
                 scores={r ? r.scores : [0, 0, 0, 0]}
-                soft={r ? r.soft : 0}
               />
               <div style={{
                 marginTop: 14, padding: "10px 12px",
