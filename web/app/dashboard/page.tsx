@@ -173,7 +173,7 @@ export default function DashboardPage() {
         <div className={"kpi" + (isDanger ? " red" : sev === 1 ? " cyan" : "")}>
           <div className="lbl">상태</div>
           <div className="val">{statusKo}</div>
-          <div className="ci">{r ? `심각도 ${r.severity}/3` : "—"}</div>
+          <div className="ci">{live ? "● 실시간 갱신 중" : (r ? "최신 진단 기준" : "—")}</div>
         </div>
         <div className={"kpi" + (isDanger ? " red" : "")}>
           <div className="lbl">복원 오차</div>
