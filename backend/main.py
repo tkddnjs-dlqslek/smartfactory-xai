@@ -139,8 +139,8 @@ def report(body: ReportIn):
         pred = get_engine().predict(body.z)
     except Exception as e:
         raise HTTPException(500, f"predict failed: {e}")
-    # 이상 상위 센서 (처방 기반 top-3)
-    top = [{"name": p["sensor"], "sigma": p["sigma"]} for p in pred["prescriptions"]]
+    # 이상 상위 센서 (처방 기반 top-3) — 조치(action)까지 전달해 근거 강화
+    top = [{"name": p["sensor"], "sigma": p["sigma"], "action": p["action"]} for p in pred["prescriptions"]]
     ctx = {
         "status": pred["status"], "status_ko": _STATUS_KO.get(pred["status"], pred["status"]),
         "recon_error": pred["recon_error"], "threshold": pred["threshold"], "ratio": pred["ratio"],
