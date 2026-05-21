@@ -1,0 +1,26 @@
+{
+  "method": "LogisticRegression (class_weight=balanced)",
+  "features": [
+    "ae_recon_err",
+    "if_score",
+    "ocsvm_score",
+    "lof_score"
+  ],
+  "loocv_auc": 0.9473019517795637,
+  "optimal_threshold": 0.79,
+  "loocv_metrics": {
+    "tp": 28,
+    "fp": 14,
+    "fn": 11,
+    "recall": 0.717948717948718,
+    "precision": 0.6666666666666666,
+    "f1": 0.6913580241920438
+  },
+  "meta_coefficients": {
+    "ae_recon_err": 1.2164998634978301,
+    "if_score": 1.0692022955625018,
+    "ocsvm_score": 1.5037355159399142,
+    "lof_score": -1.503163827143305
+  },
+  "meta_intercept": -2.134431784970639
+}

@@ -1,0 +1,10 @@
+# Render/Linux 배포용 — torch는 CPU 전용 휠 (CUDA 미포함, 용량↓)
+--extra-index-url https://download.pytorch.org/whl/cpu
+fastapi==0.115.6
+uvicorn[standard]>=0.27
+pydantic==2.8.2
+torch==2.3.1+cpu
+numpy==1.26.4
+scikit-learn==1.2.2
+shap==0.48.0
+joblib==1.4.2

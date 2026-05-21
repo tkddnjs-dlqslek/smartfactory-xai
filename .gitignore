@@ -37,3 +37,27 @@ Thumbs.db
 *.egg-info/
 build/
 dist/
+
+# ── Next.js / Vercel (배포 추가) ──
+web/node_modules/
+web/.next/
+web/out/
+web/.vercel/
+node_modules/
+web/.env.local
+
+# ── 배포 불필요 산출물 ──
+_design_package/
+output/
+results/_m2m3_experiment/
+*.pptx
+
+# ── 학습 중간/백업 아티팩트 (런타임 불필요) ──
+models/*_v2*.npy
+models/*_v2*.pkl
+models/*_v2*.pt
+models/*_v2*.json
+models/v1_backup_*
+models/*.before_m2m3
+models/X_val.npy
+models/y_val.npy

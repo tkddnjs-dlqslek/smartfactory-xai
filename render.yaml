@@ -1,0 +1,17 @@
+# Render Blueprint — SmartFactory XAI 백엔드 (FastAPI + torch CPU)
+# repo 루트 = smart_factory_xai/ (backend/, models/, results/ 포함)
+services:
+  - type: web
+    name: smartfactory-xai-api
+    runtime: python
+    plan: free
+    rootDir: .
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ALLOWED_ORIGINS
+        # Vercel 배포 URL 확정 후 여기에 입력 (예: https://smartfactory-xai.vercel.app)
+        value: ""

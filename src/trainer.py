@@ -5,10 +5,19 @@ from torch.utils.data import DataLoader, TensorDataset
 from src.config import BATCH_SIZE, EPOCHS, LR, EARLY_STOP_PATIENCE, SEED
 
 
-def train(model, X_train: np.ndarray, X_val_normal: np.ndarray):
+def train(model, X_train: np.ndarray, X_val_normal: np.ndarray,
+          denoising_std: float = 0.0, use_huber: bool = False):
+    """Autoencoder 학습.
+    M2. Denoising (옵션, default OFF) — denoising_std > 0 시 노이즈 주입
+    M3. Huber Loss (옵션, default OFF) — use_huber=True 시 SmoothL1Loss
+    실험 결과: 우리 KAMP 데이터에서는 M2+M3 모두 OFF가 최선 (results/_m2m3_experiment 참고)
+    """
     torch.manual_seed(SEED)
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-    criterion = nn.MSELoss()
+    # M3: Huber Loss (MSE 대비 outlier에 강건)
+    criterion = nn.SmoothL1Loss(beta=0.05) if use_huber else nn.MSELoss()
+    # 검증 손실은 MSE로 유지 (기존 비교 가능성)
+    val_criterion = nn.MSELoss()
 
     X_t = torch.FloatTensor(X_train)
     X_v = torch.FloatTensor(X_val_normal)
@@ -25,14 +34,19 @@ def train(model, X_train: np.ndarray, X_val_normal: np.ndarray):
         train_losses = []
         for xb, _ in loader:
             optimizer.zero_grad()
-            loss = criterion(model(xb), xb)
+            # M2: Denoising — 입력에 노이즈 추가, 타겟은 원본
+            if denoising_std > 0:
+                xb_noisy = xb + denoising_std * torch.randn_like(xb)
+            else:
+                xb_noisy = xb
+            loss = criterion(model(xb_noisy), xb)
             loss.backward()
             optimizer.step()
             train_losses.append(loss.item())
 
         model.eval()
         with torch.no_grad():
-            val_loss = criterion(model(X_v), X_v).item()
+            val_loss = val_criterion(model(X_v), X_v).item()
 
         t_loss = np.mean(train_losses)
         history['train_loss'].append(t_loss)

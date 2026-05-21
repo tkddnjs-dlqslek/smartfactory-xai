@@ -1,0 +1,173 @@
+/* ─────────────────────────────────────────────────────────────────
+   DashStack — Core color + type tokens
+   Source: Figma file "DashStack - Free Admin Dashboard UI Kit"
+   Page: /Component (definitions) + /Stack-Admin-Dark-Style-1 (usage)
+   ───────────────────────────────────────────────────────────────── */
+
+/* Fonts — The Figma source references Nunito Sans (4655+1521+225+205+8 uses)
+   for body and Gilroy for a few display strings. The brand has since switched
+   to PRETENDARD as its supplied typeface — we wire it in here as the single
+   text family for both `body` and `display` roles. Weights are mapped to the
+   Pretendard ladder (100 Thin … 900 Black). LineAwesome / FontAwesome stay
+   loaded separately as real icon fonts (see ICONOGRAPHY in README). */
+
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 100; font-display: swap; src: url("./fonts/Pretendard-Thin.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 200; font-display: swap; src: url("./fonts/Pretendard-ExtraLight.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 300; font-display: swap; src: url("./fonts/Pretendard-Light.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 400; font-display: swap; src: url("./fonts/Pretendard-Regular.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 500; font-display: swap; src: url("./fonts/Pretendard-Medium.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 600; font-display: swap; src: url("./fonts/Pretendard-SemiBold.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 700; font-display: swap; src: url("./fonts/Pretendard-Bold.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 800; font-display: swap; src: url("./fonts/Pretendard-ExtraBold.woff") format("woff"); }
+@font-face { font-family: "Pretendard"; font-style: normal; font-weight: 900; font-display: swap; src: url("./fonts/Pretendard-Black.woff") format("woff"); }
+
+:root {
+  /* ── Brand ─────────────────────────────────────────────────────── */
+  --ds-blue:           rgb(72, 128, 255);    /* primary CTA, links, active items, charts */
+  --ds-blue-hover:     rgb(80, 136, 255);    /* lighter variant seen on lifted states */
+  --ds-blue-deep:      rgb(67, 121, 238);    /* pressed / dark-mode tone */
+  --ds-blue-shadow:    rgb(55, 73, 166);     /* used on glow shadows under blue buttons */
+  --ds-blue-soft:      rgb(226, 234, 248);   /* tonal blue surface (badges, chips, bg) */
+
+  /* ── Neutral / surface — LIGHT theme ──────────────────────────── */
+  --ds-bg:             rgb(245, 246, 250);   /* page background (Main Bg Color Light) */
+  --ds-surface:        rgb(255, 255, 255);   /* card / sidebar / top bar */
+  --ds-border:         rgb(232, 232, 232);   /* sidebar divider */
+  --ds-divider:        rgb(224, 224, 224);   /* horizontal hairline */
+  --ds-input-bg:       rgb(245, 246, 250);   /* search field, inputs */
+  --ds-input-border:   rgb(213, 213, 213);
+
+  /* ── Neutral / surface — DARK theme ───────────────────────────── */
+  --ds-bg-dark:        rgb(27, 36, 49);      /* page bg (Main Bg Color Dark) */
+  --ds-surface-dark:   rgb(39, 49, 66);      /* card / sidebar */
+  --ds-surface-dark-2: rgb(32, 41, 56);      /* nested surface */
+  --ds-border-dark:    rgb(49, 61, 79);      /* dark divider / inset shadow */
+
+  /* ── Text ─────────────────────────────────────────────────────── */
+  --ds-text:           rgb(32, 34, 36);      /* primary text on light */
+  --ds-text-dark:      rgb(43, 48, 52);      /* slightly different gray seen in body */
+  --ds-text-2:         rgb(64, 64, 64);      /* secondary heading */
+  --ds-text-3:         rgb(86, 86, 86);      /* subtle / meta */
+  --ds-text-muted:     rgb(132, 132, 132);   /* placeholder, captions */
+  --ds-on-dark:        rgb(255, 255, 255);
+  --ds-on-dark-muted:  rgba(255, 255, 255, 0.7);
+  --ds-on-dark-faint:  rgba(255, 255, 255, 0.4);
+
+  /* ── Semantic / status accents (each used as 20%-opacity bg + 100% text) */
+  --ds-success:        rgb(0, 182, 155);     /* "Completed", green chip + check ticks */
+  --ds-warning:        rgb(255, 167, 86);    /* "On Hold" */
+  --ds-warning-2:      rgb(253, 154, 86);    /* "Work" label */
+  --ds-amber:          rgb(255, 213, 109);   /* gold star + accent */
+  --ds-orange:         rgb(255, 149, 0);     /* highlight / Total Pending icon bg */
+  --ds-danger:         rgb(239, 56, 38);     /* "Rejected" */
+  --ds-pink:           rgb(249, 60, 101);    /* notification dot */
+  --ds-purple:         rgb(98, 38, 239);     /* "Processing" */
+  --ds-purple-2:       rgb(130, 128, 255);   /* total user icon tint */
+  --ds-violet:         rgb(186, 41, 255);    /* "In Transit" */
+  --ds-magenta:        rgb(212, 86, 253);    /* "Friends" label */
+
+  /* ── Shadow tokens ────────────────────────────────────────────── */
+  --ds-shadow-card:    6px 6px 54px 0 rgba(0, 0, 0, 0.05);
+  --ds-shadow-btn:     0 6px 12px 0 rgba(55, 73, 166, 0.30);
+  --ds-shadow-soft:    0 4px 12px 0 rgba(2, 46, 86, 0.08);
+
+  /* ── Radius scale ─────────────────────────────────────────────── */
+  --ds-radius-xs:     3px;   /* small chips */
+  --ds-radius-sm:     4.5px; /* status chip */
+  --ds-radius-md:     6px;   /* button */
+  --ds-radius-lg:     8px;   /* "Compose" button */
+  --ds-radius-xl:    12px;   /* tonal pill button */
+  --ds-radius-2xl:   14px;   /* card */
+  --ds-radius-pill: 999px;   /* search bar, avatar */
+
+  /* ── Spacing (4-pt-ish) ───────────────────────────────────────── */
+  --ds-sp-1:  4px;
+  --ds-sp-2:  8px;
+  --ds-sp-3: 12px;
+  --ds-sp-4: 16px;
+  --ds-sp-5: 20px;
+  --ds-sp-6: 24px;
+  --ds-sp-8: 32px;
+  --ds-sp-10: 40px;
+  --ds-sp-12: 48px;
+
+  /* ── Type — base ──────────────────────────────────────────────── */
+  --ds-font-body: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --ds-font-display: "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
+  --ds-icon-line: "LineAwesome", "Line Awesome Free", sans-serif;
+  --ds-icon-fa:   "Font Awesome 5 Free", "FontAwesome", sans-serif;
+
+  /* ── Type — semantic roles (built from the Figma usage matrix) ── */
+  /* SemiBold 14 is the modal default (3275 uses), Bold 14 next (633). */
+  --ds-h1-size: 32px; --ds-h1-weight: 700;   /* page title "Dashboard" */
+  --ds-h2-size: 24px; --ds-h2-weight: 700;   /* big metric numbers */
+  --ds-h3-size: 18px; --ds-h3-weight: 700;   /* product titles, card titles */
+  --ds-h4-size: 16px; --ds-h4-weight: 700;   /* prices, money */
+  --ds-body-size:  14px; --ds-body-weight: 600;  /* default body — SemiBold 14 */
+  --ds-body-strong-weight: 700;
+  --ds-meta-size: 12px; --ds-meta-weight: 700;   /* badges, "PAGES" overline */
+  --ds-caption-size: 12px; --ds-caption-weight: 600;
+  --ds-eyebrow-tracking: 0.257px;
+}
+
+/* ─── Semantic element styles ─── */
+.ds-h1 {
+  font-family: var(--ds-font-body);
+  font-weight: var(--ds-h1-weight);
+  font-size: var(--ds-h1-size);
+  line-height: 1.1;
+  color: var(--ds-text);
+  letter-spacing: -0.01em;
+}
+.ds-h2 {
+  font-family: var(--ds-font-body);
+  font-weight: var(--ds-h2-weight);
+  font-size: var(--ds-h2-size);
+  line-height: 1.15;
+  color: var(--ds-text);
+}
+.ds-h3 {
+  font-family: var(--ds-font-body);
+  font-weight: var(--ds-h3-weight);
+  font-size: var(--ds-h3-size);
+  line-height: 1.2;
+  color: var(--ds-text);
+}
+.ds-h4 {
+  font-family: var(--ds-font-body);
+  font-weight: var(--ds-h4-weight);
+  font-size: var(--ds-h4-size);
+  line-height: 1.25;
+  color: var(--ds-text);
+}
+.ds-body {
+  font-family: var(--ds-font-body);
+  font-weight: var(--ds-body-weight);
+  font-size: var(--ds-body-size);
+  line-height: 1.4;
+  color: var(--ds-text);
+  letter-spacing: 0.3px;
+}
+.ds-body-strong { font-weight: var(--ds-body-strong-weight); }
+
+.ds-meta {
+  font-family: var(--ds-font-body);
+  font-weight: var(--ds-meta-weight);
+  font-size: var(--ds-meta-size);
+  line-height: 1;
+  color: var(--ds-text-3);
+}
+.ds-eyebrow {
+  font-family: var(--ds-font-body);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: var(--ds-eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--ds-text);
+  opacity: 0.6;
+}
+.ds-numeric {
+  font-family: var(--ds-font-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

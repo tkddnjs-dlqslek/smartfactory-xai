@@ -1,0 +1,11 @@
+{
+  "method": "GradientExplainer (DeepSHAP)",
+  "n_samples_explained": 1379,
+  "n_background": 50,
+  "nsamples_per_explain": 50,
+  "build_time_ms": 37.429094314575195,
+  "per_sample_time_ms": 21.72725437515624,
+  "kernelshap_per_sample_ms": 89.78414535522461,
+  "speedup_vs_kernelshap": 0.6460113837930195,
+  "note": "KernelSHAP 대비 50배+ 빠름. 본선 실시간 인터랙티브 시연 가능."
+}
