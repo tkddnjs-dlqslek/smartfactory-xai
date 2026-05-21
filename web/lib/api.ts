@@ -56,7 +56,9 @@ export interface MetricsBundle {
 }
 export interface BatchBundle { metrics: any; anomaly_log: any; }
 
-/* 크로스탭 시나리오 컨텍스트 — 한 탭에서 고른 운전상태가 플랫폼 전체에 흐름 */
+/* 크로스탭 시나리오 컨텍스트 — 한 탭/사이드바에서 고른 운전상태가 플랫폼 전체에 흐름 (pub/sub) */
+type ScenListener = (i: number) => void;
+const _scenListeners = new Set<ScenListener>();
 export const scenarioStore = {
   get(): number | null {
     if (typeof window === "undefined") return null;
@@ -65,7 +67,9 @@ export const scenarioStore = {
   },
   set(i: number) {
     if (typeof window !== "undefined") window.localStorage.setItem("sfx_scenario", String(i));
+    _scenListeners.forEach((l) => l(i));
   },
+  subscribe(l: ScenListener) { _scenListeners.add(l); return () => { _scenListeners.delete(l); }; },
 };
 
 export const api = {

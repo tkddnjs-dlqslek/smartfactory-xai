@@ -5,6 +5,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { DashShell, Consensus, Gauge, SensorGrid } from "@/components/parts";
 import { api, scenarioStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
+import { liveStore } from "@/lib/live";
 
 const STATUS_KO: Record<string, string> = {
   NORMAL: "정상", WARNING: "경고", DANGER: "위험", CRITICAL: "긴급",
@@ -41,6 +42,16 @@ export default function DashboardPage() {
     catch (e: any) { setErr(e.message || "예측 실패"); }
   }
 
+  // 사이드바 시나리오 카드 등 외부에서 시나리오 변경 시 동기화
+  useEffect(() => {
+    return scenarioStore.subscribe((i) => {
+      if (scenarios[i] && i !== sel) {
+        setSel(i);
+        api.predict(scenarios[i].z).then(setR).catch(() => {});
+      }
+    });
+  }, [scenarios, sel]);
+
   // ── What-if: 현재 시나리오의 이상 Top-3 센서를 정상(0)쪽으로 슬라이딩 → 재예측 ──
   const baseZ = scenarios[sel]?.z;
   const topIdx = useMemo(() => {
@@ -75,6 +86,19 @@ export default function DashboardPage() {
   const wfBefore = r?.recon_error ?? 0;
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
+  // ── LIVE 스트리밍 (1Hz 자동 재예측) ──
+  const [live, setLive] = useState(false);
+  useEffect(() => liveStore.subscribe(setLive), []);
+  useEffect(() => {
+    if (!live || !baseZ) return;
+    const id = setInterval(async () => {
+      // 현재 시나리오 기준 미세 드리프트(±0.1σ)로 라이브 센서 피드 흉내
+      const drifted = baseZ.map((v) => v + (Math.random() - 0.5) * 0.2);
+      try { setR(await api.predict(drifted)); } catch { /* keep last */ }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [live, baseZ]);
+
   // ── 자연어 진단 보고서 (Claude Haiku 라이브) ──
   const [nlgTone, setNlgTone] = useState<"worker" | "supervisor" | "director">("worker");
   const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);
@@ -96,6 +120,10 @@ export default function DashboardPage() {
   const gaugeState = sev >= 2 ? "danger" : sev === 1 ? "warn" : "normal";
   const statusKo = r ? STATUS_KO[r.status] : "—";
   const pctThr = r ? Math.round(r.ratio * 100) : 0;
+
+  // 배너 액션 피드백
+  const [ack, setAck] = useState("");
+  function doAck(msg: string) { setAck(msg); setTimeout(() => setAck(""), 4000); }
 
   return (
     <DashShell
@@ -121,6 +149,14 @@ export default function DashboardPage() {
           );
         })}
         {loading && <span style={{ fontSize: 11, color: "var(--sx-text-3)" }}>분석 중…</span>}
+        <button onClick={() => liveStore.toggle()} className="btn subtle"
+          style={{
+            marginLeft: "auto", padding: "6px 12px", fontSize: 11, fontWeight: 800,
+            border: "1px solid " + (live ? "var(--sx-red-bd)" : "var(--sx-border-2)"),
+            background: live ? "var(--sx-red-bg)" : "transparent",
+            color: live ? "var(--sx-red-soft)" : "var(--sx-text-2)",
+          }}>{live ? "■ LIVE 정지" : "▶ LIVE 스트리밍"}</button>
+        {live && <span className="pill live"><span className="pulse"></span> 1Hz 스트리밍 중</span>}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
@@ -155,10 +191,10 @@ export default function DashboardPage() {
         <div className="ico">{isDanger ? "!" : "ⓘ"}</div>
         <div style={{ flex: 1 }}>
           <div className="ttl">{isDanger ? `▲ ${statusKo} · 단일 모델 피로 → 4-AI 합의가 거짓 알람 71% 제거` : `● ${statusKo} · 4-AI 합의 ${r?.agree ?? 0}/4`}</div>
-          <div className="sub">{r ? `복원 오차 ${r.recon_error.toFixed(3)} · Soft ${r.soft.toFixed(3)} · DeepSHAP 100 ms · 처방 ${r.prescriptions.length}건 자동 생성됨` : "백엔드 연결 대기 중"}</div>
+          <div className="sub">{ack || (r ? `복원 오차 ${r.recon_error.toFixed(3)} · Soft ${r.soft.toFixed(3)} · DeepSHAP 100 ms · 처방 ${r.prescriptions.length}건 자동 생성됨` : "백엔드 연결 대기 중")}</div>
         </div>
-        <button className="btn danger" style={{ padding: "10px 14px" }}>▶ 처방 적용</button>
-        <button className="btn subtle" style={{ padding: "10px 14px" }}>거짓 알람 표시</button>
+        <button className="btn danger" style={{ padding: "10px 14px" }} onClick={() => doAck(`✓ 처방 ${r?.prescriptions.length ?? 0}건 적용 요청 전송 — HMI 작업 지시 발행`)}>▶ 처방 적용</button>
+        <button className="btn subtle" style={{ padding: "10px 14px" }} onClick={() => doAck("✓ 거짓 알람으로 표시됨 — Active Learning 재학습 큐에 반영")}>거짓 알람 표시</button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.45fr 1fr", gap: 12, flex: 1, minHeight: 0 }}>

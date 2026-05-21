@@ -1,8 +1,10 @@
 "use client";
 /* SmartFactory XAI — shared chart and shell parts (mission-control aesthetic)
    원본: _design_package/smart-factory-mvp/project/design-parts.jsx */
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { liveStore } from "@/lib/live";
+import { scenarioStore } from "@/lib/api";
 
 /* ───── 5탭 → 라우트 매핑 ───── */
 export const TAB_ROUTES: Record<number, string> = {
@@ -162,6 +164,8 @@ export function Annot({ value, unit, tag = "real", size = 14, color }: any) {
 
 /* ───── topbar for dashboard ───── */
 export function TopBar({ width = 1440 }: any) {
+  const [live, setLive] = useState(false);
+  useEffect(() => liveStore.subscribe(setLive), []);
   return (
     <div style={{
       height: 56, padding: "0 24px", background: "var(--sx-bg-2)",
@@ -187,7 +191,7 @@ export function TopBar({ width = 1440 }: any) {
       <div style={{marginLeft:"auto", display:"flex", gap:8, alignItems:"center"}}>
         <div className="pill"><span style={{color:"var(--sx-text-3)"}}>OPC-UA</span><span className="v" style={{color:"var(--sx-cyan)"}}>● 연결</span></div>
         <div className="pill"><span style={{color:"var(--sx-text-3)"}}>Slack</span><span className="v">#prod-alerts</span></div>
-        <div className="pill live"><span className="pulse"></span> LIVE · 1 Hz</div>
+        <div className="pill live" onClick={() => liveStore.toggle()} style={{cursor:"pointer", opacity: live ? 1 : 0.5}}>{live ? <><span className="pulse"></span> LIVE · 1 Hz</> : "○ LIVE 정지"}</div>
         <div style={{width:28, height:28, borderRadius:0, border:"1px solid var(--sx-border-2)", display:"grid", placeItems:"center", fontSize:11, fontWeight:800, color:"var(--sx-text-2)"}}>김</div>
       </div>
     </div>
@@ -196,6 +200,11 @@ export function TopBar({ width = 1440 }: any) {
 
 /* ───── sidebar 280 ───── */
 export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
+  const [live, setLive] = useState(false);
+  useEffect(() => liveStore.subscribe(setLive), []);
+  const [toggles, setToggles] = useState<Record<string, boolean>>({
+    "OPC-UA 스트림": true, "Slack 알람": true, "PDF 자동 리포트": false,
+  });
   const pillars = [
     { p: "품질 관리 / Quality", c: "var(--sx-red-soft)", tabs: [
       { i: 1, t: "실시간 진단",     sub: "Real-time" },
@@ -257,11 +266,13 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
             { l:"경고 #8", sub:"162%",      ratio:"162%" },
             { l:"위험 #27",sub:"523%",      ratio:"523%" },
             { l:"긴급 #37",sub:"978%",      ratio:"978%" },
-          ].map(s => {
-            const on = s.l === scenario || s.l.startsWith(scenario);
-            const danger = s.l.startsWith("위험") || s.l.startsWith("긴급");
+          ].map((s, idx) => {
+            const key = s.l.split(" ")[0]; // 정상/경고/위험/긴급
+            const on = typeof scenario === "string" && scenario.startsWith(key);
+            const danger = key === "위험" || key === "긴급";
             return (
-              <div key={s.l} style={{
+              <div key={s.l} onClick={() => scenarioStore.set(idx)} title="클릭하면 실시간 진단에 적용" style={{
+                cursor:"pointer",
                 padding:"8px 9px", border:"1px solid " + (on ? (danger ? "var(--sx-red-bd)" : "var(--sx-cyan-bd)") : "var(--sx-border-2)"),
                 background: on ? (danger ? "var(--sx-red-bg)" : "var(--sx-cyan-bg)") : "transparent",
                 borderRadius:2
@@ -278,27 +289,33 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
       <div style={{padding:"14px 18px"}}>
         <div className="eyebrow" style={{marginBottom:8}}>실시간 입력 토글</div>
         {[
-          { l:"LIVE 디지털 트윈", v:"재생 · 10s", on:true, danger:true },
-          { l:"OPC-UA 스트림",   v:"connected", on:true },
-          { l:"Slack 알람",      v:"#prod-alerts", on:true },
-          { l:"PDF 자동 리포트", v:"08:00 KST", on:false },
-        ].map(t => (
-          <div key={t.l} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 0", fontSize:11, fontWeight:600}}>
-            <div>
-              <div style={{color:"var(--sx-text-2)"}}>{t.l}</div>
-              <div style={{fontSize:9, color:"var(--sx-text-4)", fontWeight:700, marginTop:1}}>{t.v}</div>
-            </div>
-            <div style={{
-              width:28, height:14, background: t.on ? (t.danger ? "var(--sx-red)" : "var(--sx-cyan)") : "var(--sx-surface-3)",
-              position:"relative", borderRadius:0
-            }}>
+          { l:"LIVE 디지털 트윈", v:"1Hz 스트리밍" },
+          { l:"OPC-UA 스트림",   v:"connected" },
+          { l:"Slack 알람",      v:"#prod-alerts" },
+          { l:"PDF 자동 리포트", v:"08:00 KST" },
+        ].map(t => {
+          const isLive = t.l === "LIVE 디지털 트윈";
+          const on = isLive ? live : !!toggles[t.l];
+          const danger = isLive;
+          const onClick = () => isLive ? liveStore.toggle() : setToggles(p => ({ ...p, [t.l]: !p[t.l] }));
+          return (
+            <div key={t.l} onClick={onClick} style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"6px 0", fontSize:11, fontWeight:600, cursor:"pointer"}}>
+              <div>
+                <div style={{color:"var(--sx-text-2)"}}>{t.l}</div>
+                <div style={{fontSize:9, color:"var(--sx-text-4)", fontWeight:700, marginTop:1}}>{t.v}</div>
+              </div>
               <div style={{
-                position:"absolute", top:1, left: t.on ? 15 : 1, width: 12, height: 12,
-                background: "#fff"
-              }}></div>
+                width:28, height:14, background: on ? (danger ? "var(--sx-red)" : "var(--sx-cyan)") : "var(--sx-surface-3)",
+                position:"relative", borderRadius:0, transition:"background 0.15s"
+              }}>
+                <div style={{
+                  position:"absolute", top:1, left: on ? 15 : 1, width: 12, height: 12,
+                  background: "#fff", transition:"left 0.15s"
+                }}></div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="hair"></div>
