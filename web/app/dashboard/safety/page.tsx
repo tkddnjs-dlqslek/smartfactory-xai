@@ -4,7 +4,7 @@
    고온/고압은 곧 작업자 안전 위험 → 이상탐지 엔진을 안전 모니터링에 재활용(정직한 파생). */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, PredictResult, Scenario } from "@/lib/api";
+import { api, scenarioStore, PredictResult, Scenario } from "@/lib/api";
 
 // 안전 관련 센서 그룹 → 위험 유형
 const HAZARD = {
@@ -25,7 +25,8 @@ export default function SafetyPage() {
       try {
         const { scenarios } = await api.scenarios();
         setScenarios(scenarios);
-        const def = scenarios.length - 1;
+        const stored = scenarioStore.get();
+        const def = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
         setSel(def);
         setR(await api.predict(scenarios[def].z));
       } catch (e: any) { setErr(e.message || "백엔드 연결 실패"); }
@@ -33,7 +34,7 @@ export default function SafetyPage() {
   }, []);
 
   async function pick(i: number) {
-    setSel(i); setErr(null);
+    setSel(i); setErr(null); scenarioStore.set(i);
     try { setR(await api.predict(scenarios[i].z)); } catch (e: any) { setErr(e.message || "예측 실패"); }
   }
 

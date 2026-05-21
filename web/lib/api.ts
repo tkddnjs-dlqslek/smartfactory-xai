@@ -56,6 +56,18 @@ export interface MetricsBundle {
 }
 export interface BatchBundle { metrics: any; anomaly_log: any; }
 
+/* 크로스탭 시나리오 컨텍스트 — 한 탭에서 고른 운전상태가 플랫폼 전체에 흐름 */
+export const scenarioStore = {
+  get(): number | null {
+    if (typeof window === "undefined") return null;
+    const v = window.localStorage.getItem("sfx_scenario");
+    return v === null ? null : Number(v);
+  },
+  set(i: number) {
+    if (typeof window !== "undefined") window.localStorage.setItem("sfx_scenario", String(i));
+  },
+};
+
 export const api = {
   predict: (z: number[], required_votes = 3) =>
     post<PredictResult>("/api/predict", { z, required_votes }),

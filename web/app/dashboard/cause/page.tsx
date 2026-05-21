@@ -4,20 +4,25 @@
    디자인 1:1 매칭 — mock 데이터로 우선 구동 (백엔드 연동은 다음 단계) */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, ShapTop } from "@/lib/api";
+import { api, scenarioStore, ShapTop } from "@/lib/api";
 
 export default function CausePage() {
   const [top, setTop] = useState<ShapTop[]>([]);
   const [cum, setCum] = useState<number | null>(null);
+  const [recon, setRecon] = useState<number | null>(null);
+  const [scName, setScName] = useState("긴급 #37");
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const { scenarios } = await api.scenarios();
-        const z = scenarios[scenarios.length - 1].z; // 긴급 #37
-        const ex = await api.explain(z, 5);
-        setTop(ex.top); setCum(ex.cumulative);
+        const stored = scenarioStore.get();
+        const idx = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
+        setScName(scenarios[idx].name);
+        const z = scenarios[idx].z;
+        const [ex, pr] = await Promise.all([api.explain(z, 5), api.predict(z)]);
+        setTop(ex.top); setCum(ex.cumulative); setRecon(pr.recon_error);
       } catch (e: any) {
         setErr(e.message || "SHAP 연결 실패");
       }
@@ -25,11 +30,15 @@ export default function CausePage() {
   }, []);
 
   const maxAbs = top.length ? Math.max(...top.map(t => t.abs_shap)) : 1;
+  // 워터폴: 실측 SHAP 기여를 baseline→prediction 누적. baseline = 예측 - Σ(top shap)
+  const sumTop = top.reduce((s, t) => s + t.shap, 0);
+  const pred = recon ?? 0;
+  const base = pred - sumTop;
 
   return (
-    <DashShell activeTab={2} scenario="긴급 #37"
+    <DashShell activeTab={2} scenario={scName}
       headline="불량 원인 분석 · GradientSHAP + 인과 그래프"
-      sub={`긴급 #37 (978%) · GradientExplainer < 100 ms${err ? " · ⚠ 백엔드 미연결" : ""}`}>
+      sub={`${scName} · GradientExplainer < 100 ms${err ? " · ⚠ 백엔드 미연결" : ""}`}>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, flex: 1, minHeight: 0 }}>
         <div className="card">
@@ -52,32 +61,34 @@ export default function CausePage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">SHAP Waterfall · 누적 분해</span><span className="sub">0.062 → 0.412</span></div>
+          <div className="h"><span className="ttl">SHAP Waterfall · 누적 분해</span><span className="sub">{recon !== null ? `기준 ${base.toFixed(3)} → 예측 ${pred.toFixed(3)}` : "계산 중"} <span className="tag real" style={{ marginLeft: 4 }}>실측</span></span></div>
           <div className="b">
             <svg viewBox="0 0 460 240" style={{ width: "100%", height: 240, display: "block" }}>
-              <line x1="20" y1="220" x2="440" y2="220" stroke="var(--sx-border-2)" strokeWidth="0.8" />
-              <text x="20" y="234" fill="var(--sx-text-3)" fontSize="9" fontWeight="700">기준 0.062</text>
-              <text x="440" y="234" fill="var(--sx-red-soft)" fontSize="9" fontWeight="700" textAnchor="end">예측 0.412</text>
-              {[
-                { x: 60, w: 60, h: 54, lbl: "Nozzle", v: "+0.090" },
-                { x: 130, w: 60, h: 44, lbl: "Filling", v: "+0.072" },
-                { x: 200, w: 60, h: 34, lbl: "Cushion", v: "+0.054" },
-                { x: 270, w: 60, h: 26, lbl: "Peak P.", v: "+0.040" },
-                { x: 340, w: 60, h: 18, lbl: "Hot Run.", v: "+0.028" },
-              ].map((b, i) => {
-                const accum = [0, 54, 98, 132, 158][i];
-                const yTop = 220 - 30 - accum - b.h;
-                const yBot = yTop + b.h;
-                return (
-                  <g key={i}>
-                    <rect x={b.x} y={yTop} width={b.w} height={b.h} fill="var(--sx-red)" fillOpacity="0.78" />
-                    <line x1={b.x + b.w} y1={yBot} x2={b.x + b.w + 8} y2={yBot} stroke="var(--sx-border-2)" strokeDasharray="2 2" />
-                    <text x={b.x + b.w / 2} y={yTop - 5} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="middle" fontFamily="ui-monospace">{b.v}</text>
-                    <text x={b.x + b.w / 2} y={236} fill="var(--sx-text-3)" fontSize="9" fontWeight="700" textAnchor="middle">{b.lbl}</text>
-                  </g>
-                );
-              })}
-              <line x1="430" y1="20" x2="430" y2="220" stroke="var(--sx-red)" strokeWidth="0.8" strokeDasharray="3 2" />
+              <line x1="20" y1="210" x2="440" y2="210" stroke="var(--sx-border-2)" strokeWidth="0.8" />
+              <text x="20" y="224" fill="var(--sx-text-3)" fontSize="9" fontWeight="700">기준 {recon !== null ? base.toFixed(3) : "—"}</text>
+              <text x="440" y="224" fill="var(--sx-red-soft)" fontSize="9" fontWeight="700" textAnchor="end">예측 {recon !== null ? pred.toFixed(3) : "—"}</text>
+              {(() => {
+                if (!top.length || recon === null) return null;
+                const span = Math.max(pred - base, 1e-6);
+                const yOf = (v: number) => 200 - ((v - base) / span) * 170;
+                let acc = base;
+                const bw = 56;
+                return top.map((s, i) => {
+                  const before = acc; const after = acc + s.shap; acc = after;
+                  const x = 44 + i * 78;
+                  const yTop = yOf(Math.max(before, after));
+                  const yBot = yOf(Math.min(before, after));
+                  const pos = s.shap >= 0;
+                  return (
+                    <g key={s.name}>
+                      <rect x={x} y={yTop} width={bw} height={Math.max(2, yBot - yTop)} fill={pos ? "var(--sx-red)" : "var(--sx-cyan)"} fillOpacity="0.78" />
+                      {i < top.length - 1 && <line x1={x + bw} y1={yOf(after)} x2={x + bw + 22} y2={yOf(after)} stroke="var(--sx-border-2)" strokeDasharray="2 2" />}
+                      <text x={x + bw / 2} y={yTop - 5} fill={pos ? "var(--sx-red-soft)" : "var(--sx-cyan)"} fontSize="9" fontWeight="800" textAnchor="middle" fontFamily="ui-monospace">{pos ? "+" : ""}{s.shap.toFixed(3)}</text>
+                      <text x={x + bw / 2} y={226} fill="var(--sx-text-3)" fontSize="8" fontWeight="700" textAnchor="middle">{s.name.replace(/_/g, " ").slice(0, 9)}</text>
+                    </g>
+                  );
+                });
+              })()}
             </svg>
           </div>
         </div>

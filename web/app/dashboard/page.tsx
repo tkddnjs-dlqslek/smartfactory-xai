@@ -4,7 +4,7 @@
    What-if / NLG / 이상이력은 보조 위젯으로 정적 유지(2차 연동 예정). */
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { DashShell, Consensus, Gauge, SensorGrid } from "@/components/parts";
-import { api, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
+import { api, scenarioStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
 
 const STATUS_KO: Record<string, string> = {
   NORMAL: "정상", WARNING: "경고", DANGER: "위험", CRITICAL: "긴급",
@@ -23,7 +23,8 @@ export default function DashboardPage() {
       try {
         const { scenarios } = await api.scenarios();
         setScenarios(scenarios);
-        const def = scenarios.length - 1; // 마지막 = 긴급#37
+        const stored = scenarioStore.get();
+        const def = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
         setSel(def);
         setR(await api.predict(scenarios[def].z));
       } catch (e: any) {
@@ -35,7 +36,7 @@ export default function DashboardPage() {
   }, []);
 
   async function pick(i: number) {
-    setSel(i); setErr(null);
+    setSel(i); setErr(null); scenarioStore.set(i);
     try { setR(await api.predict(scenarios[i].z)); }
     catch (e: any) { setErr(e.message || "예측 실패"); }
   }
