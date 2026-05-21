@@ -172,13 +172,13 @@ export default function TrustPage() {
             <div className="b">
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                 <div>
-                  <div className="eyebrow">F1-OPT τ</div>
+                  <div className="eyebrow">배포 τ (운영)</div>
                   <div className="num" style={{ fontSize: 22, fontWeight: 800, marginTop: 2 }}>{f4(ct?.f1_optimal_threshold)}</div>
                   <div style={{ fontSize: 10, color: "var(--sx-text-3)", fontWeight: 700, marginTop: 2 }}>거짓경보 {cm ? cm.fp : "—"}건 · {ct?.f1_optimal_cost_fn50_fp3 ?? "—"}만원</div>
                 </div>
                 <div style={{ color: "var(--sx-text-4)", fontSize: 14, paddingTop: 16 }}>→</div>
                 <div style={{ textAlign: "right" }}>
-                  <div className="eyebrow" style={{ color: "var(--sx-cyan)" }}>COST-OPT τ</div>
+                  <div className="eyebrow" style={{ color: "var(--sx-cyan)" }}>비용·F1 최적 τ</div>
                   <div className="num" style={{ fontSize: 22, fontWeight: 800, color: "var(--sx-cyan)", marginTop: 2 }}>{f4(ct?.recommended?.threshold)}</div>
                   <div style={{ fontSize: 10, color: "var(--sx-cyan)", fontWeight: 700, marginTop: 2 }}>거짓경보 {ct?.recommended?.fp ?? "—"}건 · {ct?.recommended?.total_cost_man ?? "—"}만원</div>
                 </div>

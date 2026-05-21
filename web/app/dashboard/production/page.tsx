@@ -15,8 +15,10 @@ const KO: Record<string, string> = {
   Injection_Time: "사출 시간", Cycle_Time: "사이클 시간", Max_Switch_Over_Pressure: "최대 전환압력",
   Cushion_Position: "쿠션 위치", Mold_Temperature_4: "금형온도4", Mold_Temperature_3: "금형온도3",
   Average_Back_Pressure: "평균 배압", Max_Screw_RPM: "최대 스크류RPM", Average_Screw_RPM: "평균 스크류RPM",
+  Plasticizing_Time: "가소화 시간", Plasticizing_Position: "가소화 위치", Max_Injection_Pressure: "최대 사출압력",
+  Clamp_Close_Time: "형체결 시간", Clamp_Open_Position: "형개방 위치", Hopper_Temperature: "호퍼 온도",
 };
-const ko = (s: string) => KO[s] || s;
+const ko = (s: string) => KO[s] || s.replace(/_/g, " ");
 
 export default function ProductionPage() {
   const [m, setM] = useState<any>(null);
@@ -101,7 +103,7 @@ export default function ProductionPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 12 }}>
         <div className="card">
-          <div className="h"><span className="ttl">OEE 분해 · A × P × Q</span><span className="sub">= {OEE ? (OEE * 100).toFixed(1) : "—"}%</span></div>
+          <div className="h"><span className="ttl">OEE 분해 · A × P × Q</span><span className="sub">가동률·성능 = 가정</span></div>
           <div className="b" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {factors.map((f) => (
               <div key={f.k}>
@@ -160,25 +162,25 @@ export default function ProductionPage() {
       </div>
 
       <div className="card">
-        <div className="h"><span className="ttl">불량 원인 Pareto · 실측 {agg ? agg.defect : 39}건 주원인 센서</span><span className="sub">불량 샷의 최대 이상(|σ|) 센서 집계</span></div>
+        <div className="h"><span className="ttl">불량 원인 Pareto · 실측 {agg ? agg.defect : 39}건 주원인 센서</span><span className="sub">불량 1건마다 가장 크게 벗어난(|σ| 최대) 센서로 집계</span></div>
         <div className="b" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {agg && (() => {
             const tot = agg.pareto.reduce((s, p) => s + p.n, 0); let cum = 0;
-            return agg.pareto.map((p, i) => {
+            return agg.pareto.map((p) => {
               cum += p.n; const pct = (p.n / tot) * 100, cumPct = (cum / tot) * 100;
               return (
                 <div key={p.c}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-                    <span style={{ color: i < 2 ? "var(--sx-red-soft)" : "var(--sx-text-2)" }}>{ko(p.c)}</span>
+                    <span style={{ color: "var(--sx-red-soft)" }}>{ko(p.c)}</span>
                     <span className="num" style={{ color: "var(--sx-text-3)" }}>{p.n}건 ({pct.toFixed(0)}%) · 누적 {cumPct.toFixed(0)}%</span>
                   </div>
-                  <div className="bar" style={{ height: 10 }}><i className={i < 2 ? "red" : ""} style={{ width: pct + "%" }}></i></div>
+                  <div className="bar" style={{ height: 10 }}><i className="red" style={{ width: pct + "%" }}></i></div>
                 </div>
               );
             });
           })()}
           {!agg && <div style={{ fontSize: 11, color: "var(--sx-text-3)" }}>집계 중…</div>}
-          <div style={{ fontSize: 10, color: "var(--sx-text-4)", fontWeight: 700, marginTop: 4 }}>→ 상위 원인 센서 집중 개선 시 불량 대폭 저감 (실측 불량 주원인 분포)</div>
+          <div style={{ fontSize: 10, color: "var(--sx-text-4)", fontWeight: 700, marginTop: 4 }}>→ 누적 80%를 차지하는 상위 센서를 집중 개선하면 불량 대부분 저감 (파레토 법칙)</div>
         </div>
       </div>
     </DashShell>
