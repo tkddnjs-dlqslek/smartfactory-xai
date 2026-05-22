@@ -66,3 +66,4 @@ models/v1_backup_*
 models/*.before_m2m3
 models/X_val.npy
 models/y_val.npy
+backend_run.log
