@@ -5,7 +5,14 @@
    cn7은 시계열 가동로그가 없어 RUL(잔여수명)은 시연하지 않음(정직) — MES 연동 시점. */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, SENSOR_COLS } from "@/lib/api";
+import { api, SENSOR_COLS, ImproveResult } from "@/lib/api";
+
+function download(name: string, content: string) {
+  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
+}
 
 const KO: Record<string, string> = {
   Max_Back_Pressure: "최대 배압", Max_Injection_Speed: "최대 사출속도", Filling_Time: "충전 시간",
@@ -36,6 +43,13 @@ export default function HistoryPage() {
   const [shots, setShots] = useState<number[][] | null>(null);
   const [tau, setTau] = useState(0.31983);
   const [err, setErr] = useState<string | null>(null);
+  const [adv, setAdv] = useState<ImproveResult | null>(null);   // AI 개선안
+  const [advLoading, setAdvLoading] = useState(false);
+
+  function getAdvice() {
+    setAdvLoading(true); setAdv(null);
+    api.improve().then(setAdv).catch(() => setAdv(null)).finally(() => setAdvLoading(false));
+  }
 
   useEffect(() => {
     api.validation().then((d) => setVal({ errors: d.errors, labels: d.labels })).catch((e) => setErr(e.message));
@@ -158,6 +172,27 @@ export default function HistoryPage() {
               ))}
               {agg && !agg.blind.length && <div style={{ fontSize: 11, color: "var(--sx-cyan)", fontWeight: 600 }}>✓ 전 계통 탐지율 50% 이상</div>}
               {!agg && <div style={{ fontSize: 11, color: "var(--sx-text-3)" }}>분석 중…</div>}
+
+              {/* AI 개선 어드바이저 */}
+              {agg && agg.blind.length > 0 && !adv && (
+                <button onClick={getAdvice} disabled={advLoading} className="btn" style={{ marginTop: 2, fontSize: 11, fontWeight: 800 }}>
+                  {advLoading ? "AI 분석 중…" : "🤖 AI 개선안 받기"}
+                </button>
+              )}
+              {adv && (
+                <div style={{ padding: "9px 11px", background: "var(--sx-cyan-bg)", border: "1px solid var(--sx-cyan-bd)" }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 800, color: "var(--sx-cyan)" }}>🤖 {adv.recommendation}</div>
+                  <div style={{ fontSize: 10, color: "var(--sx-text-2)", fontWeight: 600, marginTop: 4, lineHeight: 1.5 }}>{adv.rationale}</div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                    {adv.files.map((f) => (
+                      <button key={f.name} onClick={() => download(f.name, f.content)} className="btn subtle" style={{ fontSize: 10, fontWeight: 700, padding: "4px 9px" }}>⬇ {f.name}</button>
+                    ))}
+                    <button onClick={() => setAdv(null)} className="btn subtle" style={{ fontSize: 10, fontWeight: 700, padding: "4px 9px", marginLeft: "auto" }}>닫기</button>
+                  </div>
+                  <div style={{ fontSize: 9, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 5 }}>※ {adv.model === "template" ? "템플릿" : adv.model} 제안 · 시작 코드(스캐폴드)이며 실행·검증 후 채택하세요.</div>
+                </div>
+              )}
+
               <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, lineHeight: 1.5, marginTop: 2 }}>
                 ※ 실제 불량(ground truth) 기준 = 생산현황 Pareto와 정합. 탐지율은 모델 recall {agg ? (agg.recall * 100).toFixed(0) : "—"}%의 계통별 분해.
               </div>

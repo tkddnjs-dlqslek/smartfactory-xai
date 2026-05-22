@@ -42,7 +42,7 @@ export default function DashboardPage() {
   }, []);
 
   async function pick(i: number) {
-    setSel(i); setErr(null); scenarioStore.set(i);
+    setSel(i); setErr(null); scenarioStore.set(i); analysisStore.clear(); setSelectedT(null);  // 시나리오 선택 → Tab2도 시나리오로
     try { const pr = await api.predict(scenarios[i].z); setR(pr); setBaseR(pr); }
     catch (e: any) { setErr(e.message || "예측 실패"); }
   }
@@ -136,11 +136,12 @@ export default function DashboardPage() {
     if (liveMode === "demo") { setLiveMode("off"); return; }
     resetLive(); setLiveMode("demo");
   }
-  // 이상 이력 행/드롭다운에서 샷 선택 → 스트림 정지하고 그 샷을 카드에 고정 표시
+  // 이상 이력 행/드롭다운에서 샷 선택 → 스트림 정지 + 카드 고정 + 원인분석(Tab2)도 같은 샷으로 동기화
   function viewShot(entry: LiveEntry) {
     setLiveMode("off"); setR(entry.res); setSelectedT(entry.t);
+    analysisStore.set(entry.z, `라이브 ${entry.t}`);   // Tab2가 동일 샷을 분석하도록
   }
-  function clearSelection() { setSelectedT(null); if (baseR) setR(baseR); }
+  function clearSelection() { setSelectedT(null); analysisStore.clear(); if (baseR) setR(baseR); }
 
   // ── 자연어 진단 보고서 (Claude Haiku 라이브 · 작업자 톤 단일) ──
   const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);

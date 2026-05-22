@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from .engine import get_engine, SENSOR_COLS, RESULT_DIR
 from . import report as report_mod
+from . import improve as improve_mod
 
 app = FastAPI(title="SmartFactory XAI API", version="1.0")
 
@@ -196,3 +197,12 @@ def shots():
 @app.get("/api/pca")
 def pca():
     return _load_json("pca_data.json") or {}
+
+
+@app.post("/api/improve")
+def improve():
+    # 모델 사각지대(온도) 진단 → Claude 평가 → 개선안 + 스캐폴드(.ipynb/.md)
+    try:
+        return improve_mod.generate()
+    except Exception as e:
+        raise HTTPException(500, f"improve failed: {e}")
