@@ -199,8 +199,9 @@ class Engine:
         sv = sv.ravel()
 
         zlist = np.asarray(z, dtype=float).ravel()
-        order = np.argsort(np.abs(sv))[::-1][:top_n]
-        total_abs = float(np.abs(sv).sum()) + 1e-9
+        # 불량 원인 = 복원오차를 키운(=이상 쪽으로 민) 양의 SHAP. 큰 순으로 top_n.
+        order = np.argsort(sv)[::-1][:top_n]
+        total_pos = float(sv[sv > 0].sum()) + 1e-9  # 전체 '이상 기여' 합
         top = []
         for i in order:
             i = int(i)
@@ -210,7 +211,8 @@ class Engine:
                 "abs_shap": round(float(abs(sv[i])), 4),
                 "sigma": f"{'+' if zlist[i] >= 0 else ''}{zlist[i]:.1f}σ",
             })
-        cum = round(sum(t["abs_shap"] for t in top) / total_abs, 3)
+        # top_n의 양의 기여가 전체 이상 기여에서 차지하는 비중
+        cum = round(sum(max(0.0, float(sv[int(i)])) for i in order) / total_pos, 3)
         # 워터폴용 — 진짜 SHAP 기준값 E[f(X)] = 예측 - 전체 SHAP합 (배경 평균 복원오차, ≥0)
         pred_err = float(recon_error(self.ae, torch.from_numpy(x))[0].item())
         sv_sum = float(sv.sum())

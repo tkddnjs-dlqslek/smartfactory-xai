@@ -108,7 +108,7 @@ export default function CausePage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, flex: 1, minHeight: 0 }}>
         <div className="card">
-          <div className="h"><span className="ttl">▶ TOP-5 SHAP 막대 · {cum !== null ? Math.round(cum * 100) : "—"}% 누적</span><span className="sub">GradientSHAP nsamples=50</span></div>
+          <div className="h"><span className="ttl">▶ TOP-5 이상 원인 센서 · 이상 기여 {cum !== null ? Math.round(cum * 100) : "—"}%</span><span className="sub">양의 SHAP(복원오차↑) 큰 순 · GradientSHAP</span></div>
           <div className="b" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {top.map((s, i) => (
               <div key={s.name}>
