@@ -4,7 +4,7 @@
    고온/고압은 곧 작업자 안전 위험 → 이상탐지 엔진을 안전 모니터링에 재활용(정직한 파생). */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, scenarioStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
+import { api, scenarioStore, analysisStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
 
 // 안전 관련 센서 그룹 → 위험 유형
 const HAZARD = {
@@ -38,21 +38,36 @@ export default function SafetyPage() {
   const [sel, setSel] = useState(0);
   const [r, setR] = useState<PredictResult | null>(null);
   const [shotsData, setShotsData] = useState<{ shots: number[][]; labels: number[] } | null>(null);
+  const [fromLive, setFromLive] = useState(false);
+  const [liveLabel, setLiveLabel] = useState("");
   const [err, setErr] = useState<string | null>(null);
+
+  async function loadScenario(scs?: Scenario[]) {
+    const list = scs ?? scenarios;
+    const stored = scenarioStore.get();
+    const def = stored !== null && stored < list.length ? stored : list.length - 1;
+    setSel(def); setFromLive(false);
+    try { setR(await api.predict(list[def].z)); } catch (e: any) { setErr(e.message || "예측 실패"); }
+  }
 
   useEffect(() => {
     (async () => {
       try {
         const { scenarios } = await api.scenarios();
         setScenarios(scenarios);
-        const stored = scenarioStore.get();
-        const def = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
-        setSel(def);
-        setR(await api.predict(scenarios[def].z));
+        const a = analysisStore.get();
+        if (a.z) { setFromLive(true); setLiveLabel(a.name); setR(await api.predict(a.z)); }  // 라이브 샷 우선
+        else await loadScenario(scenarios);
       } catch (e: any) { setErr(e.message || "백엔드 연결 실패"); }
     })();
     api.shots().then((d) => setShotsData({ shots: d.shots, labels: d.labels })).catch(() => {});
+    return analysisStore.subscribe(() => {
+      const a = analysisStore.get();
+      if (a.z) { setFromLive(true); setLiveLabel(a.name); api.predict(a.z).then(setR).catch(() => {}); }
+    });
   }, []);
+
+  function backToScenario() { analysisStore.clear(); loadScenario(); }
 
   // 검증셋 39개 불량의 주원인(|z| 최대) 센서 → 위험유형별 발생빈도(실측 발생가능성)
   const hazardFreq = React.useMemo(() => {
@@ -70,7 +85,7 @@ export default function SafetyPage() {
   }, [shotsData]);
 
   async function pick(i: number) {
-    setSel(i); setErr(null); scenarioStore.set(i);
+    setSel(i); setErr(null); scenarioStore.set(i); analysisStore.clear(); setFromLive(false);
     try { setR(await api.predict(scenarios[i].z)); } catch (e: any) { setErr(e.message || "예측 실패"); }
   }
 
@@ -103,9 +118,16 @@ export default function SafetyPage() {
   const safeRate = safetyRows.length ? safeOk / safetyRows.length : null;
 
   return (
-    <DashShell activeTab={5} scenario={sel === 0 ? "정상" : scenarios[sel]?.name || "위험"}
+    <DashShell activeTab={5} scenario={fromLive ? liveLabel : (sel === 0 ? "정상" : scenarios[sel]?.name || "위험")}
       headline="안전 위험 모니터링 · 실시간"
       sub={`센서 이상 → 작업자 안전 위험 자동 변환 · ISO 12100 위험성 평가${err ? " · ⚠ 백엔드 미연결" : ""}`}>
+
+      {fromLive && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 12px", background: "var(--sx-cyan-bg)", border: "1px solid var(--sx-cyan-bd)" }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--sx-cyan)" }}>📡 라이브 샷 분석 중 · {liveLabel} — 실시간 진단에서 보낸 실제 샷</span>
+          <button onClick={backToScenario} className="btn subtle" style={{ padding: "3px 12px", fontSize: 10.5, fontWeight: 700 }}>운전 상태로 돌아가기</button>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <span className="eyebrow" style={{ marginRight: 4 }}>운전 상태</span>
