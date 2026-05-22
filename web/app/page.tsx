@@ -47,7 +47,7 @@ export default function Home() {
             <div className="b" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 { t: "불량 사후 발견", d: "작업자 육안 검사 한계 → 불량 다량 생산 후 적발", c: "var(--sx-red-soft)" },
-                { t: "단일 모델 알람 피로", d: "AE 단독 FP율 66% → 작업자 경보 무시", c: "#FFA756" },
+                { t: "단일 모델 알람 피로", d: "느슨한 합의는 거짓경보 多 → 작업자 경보 무시", c: "#FFA756" },
                 { t: "원인 불명", d: "이상은 알아도 어느 센서가 원인인지 설명 부재", c: "var(--sx-text-2)" },
               ].map((x) => (
                 <div key={x.t} style={{ paddingLeft: 10, borderLeft: `3px solid ${x.c}` }}>
@@ -55,7 +55,7 @@ export default function Home() {
                   <div style={{ fontSize: 10.5, color: "var(--sx-text-3)", fontWeight: 600, marginTop: 2, lineHeight: 1.4 }}>{x.d}</div>
                 </div>
               ))}
-              <div style={{ fontSize: 10.5, color: "var(--sx-cyan)", fontWeight: 700, marginTop: 2 }}>→ 4-AI 합의로 FP 66%→18%, 응답 142s→38s <span className="tag real" style={{ marginLeft: 4 }}>실측</span></div>
+              <div style={{ fontSize: 10.5, color: "var(--sx-cyan)", fontWeight: 700, marginTop: 2 }}>→ 4-AI ≥3/4 합의로 거짓경보 31→5건 · 정밀도 0.50→0.84 <span className="tag real" style={{ marginLeft: 4 }}>실측</span></div>
             </div>
           </div>
         </div>

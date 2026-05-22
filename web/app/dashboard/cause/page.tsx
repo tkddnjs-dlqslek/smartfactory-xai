@@ -1,7 +1,7 @@
 "use client";
 /* SmartFactory XAI — Tab 2 불량 원인 분석 (DashTab2)
    원본: _design_package/smart-factory-mvp/project/design-dashboard.jsx :215-355
-   디자인 1:1 매칭 — mock 데이터로 우선 구동 (백엔드 연동은 다음 단계) */
+   FastAPI 백엔드 실시간 연동 — 모든 값 검증 1,379샷 실측 */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
 import { api, scenarioStore, analysisStore, ShapTop } from "@/lib/api";
