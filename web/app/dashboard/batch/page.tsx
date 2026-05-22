@@ -168,7 +168,7 @@ export default function BatchPage() {
               </tbody>
             </table>
             <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, padding: "6px 10px", lineHeight: 1.5 }}>
-              SHOT=검증셋 행번호 · 비율=복원오차/τ · 판정은 슬라이더 τ({tau.toFixed(3)}) 연동 · 다캐비티 금형으로 동일 센서값이 중복되어 고유 패턴만 표시(지표는 전체 1,379샷 기준)
+              SHOT=검증셋 행번호 · 비율=복원오차/τ · 판정은 슬라이더 τ({tau.toFixed(3)})에 연동
             </div>
           </div>
         </div>

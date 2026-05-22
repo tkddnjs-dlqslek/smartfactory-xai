@@ -75,6 +75,29 @@ export const scenarioStore = {
   subscribe(l: ScenListener) { _scenListeners.add(l); return () => { _scenListeners.delete(l); }; },
 };
 
+/* 라이브 이상 이력 — 탭 이동해도 보존(모듈 전역 + pub/sub) */
+export interface LiveEntry { t: string; z: number[]; res: PredictResult; }
+let _liveLog: LiveEntry[] = [];
+let _liveTick = 0;
+const _liveListeners = new Set<() => void>();
+export const liveStore = {
+  state(): { log: LiveEntry[]; tick: number } { return { log: _liveLog, tick: _liveTick }; },
+  bump(e?: LiveEntry) { _liveTick++; if (e) _liveLog = [e, ..._liveLog].slice(0, 50); _liveListeners.forEach((l) => l()); },
+  reset() { _liveLog = []; _liveTick = 0; _liveListeners.forEach((l) => l()); },
+  subscribe(l: () => void) { _liveListeners.add(l); return () => { _liveListeners.delete(l); }; },
+};
+
+/* 원인분석(Tab2) 대상 z — 라이브 샷을 SHAP 분석으로 보낼 때 사용 */
+let _analysisZ: number[] | null = null;
+let _analysisName = "";
+const _aListeners = new Set<() => void>();
+export const analysisStore = {
+  get(): { z: number[] | null; name: string } { return { z: _analysisZ, name: _analysisName }; },
+  set(z: number[], name: string) { _analysisZ = z; _analysisName = name; _aListeners.forEach((l) => l()); },
+  clear() { _analysisZ = null; _analysisName = ""; _aListeners.forEach((l) => l()); },
+  subscribe(l: () => void) { _aListeners.add(l); return () => { _aListeners.delete(l); }; },
+};
+
 export const api = {
   predict: (z: number[], required_votes = 3) =>
     post<PredictResult>("/api/predict", { z, required_votes }),
@@ -90,4 +113,10 @@ export const api = {
   causal: () => get<any>("/api/causal"),
   validation: () => get<{ errors: number[]; labels: number[]; n: number; n_defect: number; err_min: number; err_max: number; note: string }>("/api/validation"),
   shots: () => get<{ shots: number[][]; labels: number[]; n: number; n_defect: number }>("/api/shots"),
+  improve: () => post<ImproveResult>("/api/improve", {}),
 };
+
+export interface ImproveResult {
+  recommendation: string; approach: string; rationale: string; model: string;
+  files: { name: string; kind: string; content: string }[];
+}

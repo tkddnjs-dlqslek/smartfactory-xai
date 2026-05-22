@@ -4,7 +4,7 @@
    디자인 1:1 매칭 — mock 데이터로 우선 구동 (백엔드 연동은 다음 단계) */
 import React, { useEffect, useState } from "react";
 import { DashShell } from "@/components/parts";
-import { api, scenarioStore, ShapTop } from "@/lib/api";
+import { api, scenarioStore, analysisStore, ShapTop } from "@/lib/api";
 
 const KO: Record<string, string> = {
   Max_Back_Pressure: "최대 배압", Max_Injection_Speed: "최대 사출속도", Filling_Time: "충전 시간",
@@ -26,27 +26,41 @@ export default function CausePage() {
   const [scName, setScName] = useState("긴급 #37");
   const [pca, setPca] = useState<any>(null);
   const [causal, setCausal] = useState<any>(null);
+  const [fromLive, setFromLive] = useState(false);  // 라이브 샷 분석 중 여부
   const [err, setErr] = useState<string | null>(null);
+
+  async function analyze(z: number[], name: string) {
+    setScName(name);
+    try {
+      const [ex, pr] = await Promise.all([api.explain(z, 5), api.predict(z)]);
+      setTop(ex.top); setCum(ex.cumulative); setRecon(pr.recon_error);
+      if (ex.base !== undefined && ex.pred !== undefined && ex.rest !== undefined)
+        setWf({ base: ex.base, pred: ex.pred, rest: ex.rest, rest_n: ex.rest_n ?? 19 });
+    } catch (e: any) { setErr(e.message || "SHAP 연결 실패"); }
+  }
+  async function loadScenario() {
+    const { scenarios } = await api.scenarios();
+    const stored = scenarioStore.get();
+    const idx = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
+    setFromLive(false); await analyze(scenarios[idx].z, scenarios[idx].name);
+  }
 
   useEffect(() => {
     (async () => {
-      try {
-        const { scenarios } = await api.scenarios();
-        const stored = scenarioStore.get();
-        const idx = stored !== null && stored < scenarios.length ? stored : scenarios.length - 1;
-        setScName(scenarios[idx].name);
-        const z = scenarios[idx].z;
-        const [ex, pr] = await Promise.all([api.explain(z, 5), api.predict(z)]);
-        setTop(ex.top); setCum(ex.cumulative); setRecon(pr.recon_error);
-        if (ex.base !== undefined && ex.pred !== undefined && ex.rest !== undefined)
-          setWf({ base: ex.base, pred: ex.pred, rest: ex.rest, rest_n: ex.rest_n ?? 19 });
-      } catch (e: any) {
-        setErr(e.message || "SHAP 연결 실패");
-      }
+      const a = analysisStore.get();
+      if (a.z) { setFromLive(true); await analyze(a.z, a.name); }   // 라이브에서 보낸 샷 우선
+      else await loadScenario();
       try { setPca(await api.pca()); } catch { /* PCA optional */ }
       try { setCausal(await api.causal()); } catch { /* causal optional */ }
     })();
+    // 라이브에서 새 샷을 보내면(탭에 머무는 동안) 갱신
+    return analysisStore.subscribe(() => {
+      const a = analysisStore.get();
+      if (a.z) { setFromLive(true); analyze(a.z, a.name); }
+    });
   }, []);
+
+  function backToScenario() { analysisStore.clear(); loadScenario(); }
 
   // 실측 인과 서브그래프 — SHAP 1위 센서를 effect로, causal_graph의 실제 강한 엣지를 원인으로 연결
   const graph = React.useMemo(() => {
@@ -105,6 +119,13 @@ export default function CausePage() {
     <DashShell activeTab={2} scenario={scName}
       headline="불량 원인 분석 · GradientSHAP + 인과 그래프"
       sub={`${scName} · GradientExplainer < 100 ms${err ? " · ⚠ 백엔드 미연결" : ""}`}>
+
+      {fromLive && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 12px", background: "var(--sx-cyan-bg)", border: "1px solid var(--sx-cyan-bd)" }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: "var(--sx-cyan)" }}>📡 라이브 샷 분석 중 · {scName} — 실시간 진단에서 보낸 실제 샷</span>
+          <button onClick={backToScenario} className="btn subtle" style={{ padding: "3px 12px", fontSize: 10.5, fontWeight: 700 }}>데모 시나리오로 돌아가기</button>
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, flex: 1, minHeight: 0 }}>
         <div className="card">

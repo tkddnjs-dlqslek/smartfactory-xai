@@ -3,8 +3,9 @@
    백엔드 /api/predict 라이브 연동 + 데모 시나리오 선택.
    What-if / NLG / 이상이력은 보조 위젯으로 정적 유지(2차 연동 예정). */
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { DashShell, Consensus, Gauge, SensorGrid } from "@/components/parts";
-import { api, scenarioStore, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
+import { api, scenarioStore, analysisStore, liveStore, LiveEntry, PredictResult, Scenario, SENSOR_COLS } from "@/lib/api";
 
 const STATUS_KO: Record<string, string> = {
   NORMAL: "정상", WARNING: "경고", DANGER: "위험", CRITICAL: "긴급",
@@ -92,11 +93,14 @@ export default function DashboardPage() {
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
   // ── LIVE 스트리밍: 데모(시나리오+노이즈) | 실측 KAMP 리플레이 (상호 배타) ──
+  const router = useRouter();
   const [liveMode, setLiveMode] = useState<"off" | "demo" | "kamp">("off");
   const live = liveMode !== "off";
-  const [tick, setTick] = useState(0);
-  // 이상 이력: 시각 + 전체 예측결과 저장(클릭 시 카드에 복원). 스트림 정지해도 보존 → 드롭다운 탐색.
-  const [liveLog, setLiveLog] = useState<{ t: string; res: PredictResult }[]>([]);
+  // 이상 이력·tick은 공유 저장소(liveStore)에서 — 탭 이동해도 보존
+  const [liveState, setLiveState] = useState(liveStore.state());
+  useEffect(() => liveStore.subscribe(() => setLiveState(liveStore.state())), []);
+  const liveLog = liveState.log;
+  const tick = liveState.tick;
   const [selectedT, setSelectedT] = useState<string | null>(null);  // 이력에서 골라 고정 보기 중인 샷
   const [shots, setShots] = useState<number[][] | null>(null);
   const shotIdx = useRef(0);
@@ -112,17 +116,17 @@ export default function DashboardPage() {
         : shots![(shotIdx.current++) % shots!.length];
       try {
         const res = await api.predict(z);
-        setR(res); setTick((t) => t + 1);
-        if (res.severity >= 1) {  // 경고·위험·긴급 모두 이상으로 기록
-          const t = new Date().toLocaleTimeString("ko-KR", { hour12: false });
-          setLiveLog((prev) => [{ t, res }, ...prev].slice(0, 50));  // 최근 50건 보존(드롭다운용)
-        }
+        setR(res);
+        const t = new Date().toLocaleTimeString("ko-KR", { hour12: false });
+        liveStore.bump(res.severity >= 1 ? { t, z, res } : undefined);  // tick++ / 이상이면 이력 추가(z 포함)
       } catch { /* keep last */ }
     }, 1000);
     return () => clearInterval(id);
   }, [liveMode, baseZ, shots]);
 
-  function resetLive() { setTick(0); setLiveLog([]); setSelectedT(null); }
+  function resetLive() { liveStore.reset(); setSelectedT(null); }
+  // 라이브 샷을 원인분석(Tab2)으로 보내기
+  function sendToCause(entry: LiveEntry) { analysisStore.set(entry.z, `라이브 ${entry.t}`); router.push("/dashboard/cause"); }
   async function startKamp() {
     if (liveMode === "kamp") { setLiveMode("off"); return; }   // 정지 — 이력 보존
     if (!shots) { try { const d = await api.shots(); setShots(d.shots); } catch { return; } }
@@ -133,7 +137,7 @@ export default function DashboardPage() {
     resetLive(); setLiveMode("demo");
   }
   // 이상 이력 행/드롭다운에서 샷 선택 → 스트림 정지하고 그 샷을 카드에 고정 표시
-  function viewShot(entry: { t: string; res: PredictResult }) {
+  function viewShot(entry: LiveEntry) {
     setLiveMode("off"); setR(entry.res); setSelectedT(entry.t);
   }
   function clearSelection() { setSelectedT(null); if (baseR) setR(baseR); }
@@ -390,9 +394,12 @@ export default function DashboardPage() {
             </div>
           )}
           {selectedT && (
-            <div style={{ padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--sx-cyan-bg)", borderBottom: "1px solid var(--sx-cyan-bd)" }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: "var(--sx-cyan)" }}>📌 {selectedT} 샷 고정 보기 중 — 위 카드가 이 샷 기준</span>
-              <button onClick={clearSelection} className="btn subtle" style={{ padding: "3px 10px", fontSize: 10.5, fontWeight: 700 }}>✕ 선택 해제</button>
+            <div style={{ padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, background: "var(--sx-cyan-bg)", borderBottom: "1px solid var(--sx-cyan-bd)" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "var(--sx-cyan)" }}>📌 {selectedT} 샷 고정 보기 중</span>
+              <span style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => { const en = liveLog.find((x) => x.t === selectedT); if (en) sendToCause(en); }} className="btn" style={{ padding: "3px 10px", fontSize: 10.5, fontWeight: 800 }}>→ 원인분석으로</button>
+                <button onClick={clearSelection} className="btn subtle" style={{ padding: "3px 10px", fontSize: 10.5, fontWeight: 700 }}>✕ 해제</button>
+              </span>
             </div>
           )}
           <div className="b" style={{ padding: 0 }}>
