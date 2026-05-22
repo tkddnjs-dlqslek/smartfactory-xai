@@ -33,11 +33,16 @@ export default function BatchPage() {
     api.shots().then((d) => setShots(d.shots)).catch(() => {});
   }, []);
 
-  // 상위 20건 이상 샷 — 검증 1,379샷에서 복원오차 내림차순 (전부 실측)
+  // 상위 20건 이상 샷 — 복원오차 내림차순. 다캐비티 금형으로 동일 센서값(z-벡터)이 중복되므로 고유 패턴만 표시.
   const top20 = React.useMemo(() => {
     if (!vs) return null;
-    const idx = vs.errors.map((e, i) => i).sort((a, b) => vs.errors[b] - vs.errors[a]).slice(0, 20);
-    return idx.map((i, rank) => {
+    const sorted = vs.errors.map((e, i) => i).sort((a, b) => vs.errors[b] - vs.errors[a]);
+    const seen = new Set<string>();
+    const out: any[] = [];
+    for (const i of sorted) {
+      const key = shots ? shots[i].map((v) => v.toFixed(3)).join(",") : String(i);
+      if (seen.has(key)) continue;            // 중복 z-벡터(같은 사출의 다른 부품) 건너뜀
+      seen.add(key);
       let main = "—", sig = 0;
       if (shots) {
         const z = shots[i]; let mi = 0, mv = 0;
@@ -45,8 +50,10 @@ export default function BatchPage() {
         main = ko(SENSOR_COLS[mi]); sig = z[mi];
       }
       const e = vs.errors[i], y = vs.labels[i], pred = e >= tau ? 1 : 0;
-      return { rank: rank + 1, row: i, re: e, ratio: e / tau, main, sig, gt: y, pred };
-    });
+      out.push({ rank: out.length + 1, row: i, re: e, ratio: e / tau, main, sig, gt: y, pred });
+      if (out.length >= 20) break;
+    }
+    return out;
   }, [vs, shots, tau]);
 
   const total = cm ? cm.tp + cm.fp + cm.fn + cm.tn : null;
@@ -161,7 +168,7 @@ export default function BatchPage() {
               </tbody>
             </table>
             <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, padding: "6px 10px", lineHeight: 1.5 }}>
-              SHOT=검증셋 행번호 · 비율=복원오차/τ · 판정은 슬라이더 τ({tau.toFixed(3)})에 연동 · 전체 KAMP 795K는 cn7과 분포가 달라(OOD) 라벨 보유한 검증셋 기준
+              SHOT=검증셋 행번호 · 비율=복원오차/τ · 판정은 슬라이더 τ({tau.toFixed(3)}) 연동 · 다캐비티 금형으로 동일 센서값이 중복되어 고유 패턴만 표시(지표는 전체 1,379샷 기준)
             </div>
           </div>
         </div>
