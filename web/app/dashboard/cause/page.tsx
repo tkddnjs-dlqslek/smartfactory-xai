@@ -74,8 +74,9 @@ export default function CausePage() {
     const pc = (arr: number[], p: number) => { const s = [...arr].sort((a, b) => a - b); return s[Math.floor((s.length - 1) * p)]; };
     const xmin = pc(allX, 0.02), xmax = pc(allX, 0.98), ymin = pc(allY, 0.02), ymax = pc(allY, 0.98);
     const cl = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-    const sx = (v: number) => 40 + ((cl(v, xmin, xmax) - xmin) / (xmax - xmin + 1e-9)) * 396;
-    const sy = (v: number) => 196 - ((cl(v, ymin, ymax) - ymin) / (ymax - ymin + 1e-9)) * 176;
+    // 축 박스(x:48~440, y:14~190) 안쪽으로 마커 반경만큼 들여서 매핑 (밖으로 안 튀게)
+    const sx = (v: number) => 54 + ((cl(v, xmin, xmax) - xmin) / (xmax - xmin + 1e-9)) * 380;
+    const sy = (v: number) => 184 - ((cl(v, ymin, ymax) - ymin) / (ymax - ymin + 1e-9)) * 164;
     const step = Math.ceil(pca.normal_pc1.length / 320);
     const normal: [number, number][] = [];
     for (let i = 0; i < pca.normal_pc1.length; i += step) normal.push([sx(pca.normal_pc1[i]), sy(pca.normal_pc2[i])]);
