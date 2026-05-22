@@ -212,8 +212,7 @@ export default function CausePage() {
                   const ey = 140, ex = 348;
                   return (<>
                     {graph.rel.map((r, i) => {
-                      const y = 40 + i * (200 / Math.max(1, n - 1 || 1)) * (n > 1 ? 1 : 0) + (n === 1 ? 100 : 0);
-                      const yy = n > 1 ? 40 + i * (200 / (n - 1)) : 130;
+                      const yy = n > 1 ? 34 + i * (196 / (n - 1)) : 130;  // viewBox(280) 안에 다 들어오게
                       const col = r.weight >= 0 ? "#D42121" : "#00D4FF";
                       const sw = 1 + Math.abs(r.weight) * 2.2;
                       return (
