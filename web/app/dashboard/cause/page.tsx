@@ -113,16 +113,16 @@ export default function CausePage() {
             {top.map((s, i) => (
               <div key={s.name}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-                  <span style={{ color: i < 3 ? "var(--sx-red-soft)" : "var(--sx-text-2)" }}>#{(i + 1).toString().padStart(2, "0")} {s.name}</span>
+                  <span style={{ color: "var(--sx-red-soft)" }}>#{(i + 1).toString().padStart(2, "0")} {ko(s.name)}</span>
                   <span className="num" style={{ color: "var(--sx-text-3)" }}>SHAP {s.shap.toFixed(3)} · {s.sigma}</span>
                 </div>
                 <div className="bar" style={{ height: 12 }}>
-                  <i className={i < 3 ? "red" : ""} style={{ width: (s.abs_shap / maxAbs * 100) + "%" }}></i>
+                  <i className="red" style={{ width: (s.abs_shap / maxAbs * 100) + "%" }}></i>
                 </div>
               </div>
             ))}
             {!top.length && <div style={{ fontSize: 11, color: "var(--sx-text-3)" }}>SHAP 계산 중…</div>}
-            <div style={{ fontSize: 10, color: "var(--sx-text-4)", fontWeight: 700, letterSpacing: 0.4, marginTop: 6 }}>+ 19 sensors · residual contribution</div>
+            <div style={{ fontSize: 10, color: "var(--sx-text-4)", fontWeight: 700, letterSpacing: 0.4, marginTop: 6 }}>+ 나머지 19센서 = 워터폴 &apos;기타&apos;</div>
           </div>
         </div>
 
@@ -237,7 +237,7 @@ export default function CausePage() {
             <div style={{ display: "flex", gap: 16, fontSize: 10, fontWeight: 700, marginTop: 6, alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ color: "var(--sx-text-2)" }}><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: "#C8C8CD", marginRight: 5 }}></span>정상 n={pca?.n_normal ?? "—"}</span>
               <span style={{ color: "var(--sx-red-soft)" }}><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: "#D42121", marginRight: 5 }}></span>이상(불량) n={pca?.n_defect ?? "—"}</span>
-              <span style={{ color: "var(--sx-text-4)", fontWeight: 600 }}>24센서를 분산 최대 2축으로 압축 — 이상(빨강)이 정상 군집 밖 외곽에 분포</span>
+              <span style={{ color: "var(--sx-text-4)", fontWeight: 600 }}>PC1·PC2 직교(상관 0)라 추세가 아닌 분포로 봄 · 불량은 평균 5σ 바깥이나 일부는 정상과 겹침(완벽 분리는 24D 복원오차)</span>
             </div>
           </div>
         </div>
