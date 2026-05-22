@@ -187,7 +187,7 @@ export default function CausePage() {
                     );
                   })}
                   <circle cx={x0 + (n - 1) * step + (step - bw) / 2 + bw} cy={yOf(pred)} r="3.5" fill="var(--sx-red)" />
-                  <text x={x0 + (n - 1) * step + (step - bw) / 2 + bw + 6} y={yOf(pred) + 3} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="start">예측</text>
+                  <text x={x0 + (n - 1) * step + (step - bw) / 2 + bw + 4} y={yOf(pred) - 7} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="end">예측 {pred.toFixed(3)}</text>
                 </>);
               })()}
               {(!wfBars.length || recon === null) && <text x="230" y="120" fill="var(--sx-text-3)" fontSize="11" textAnchor="middle">계산 중…</text>}
@@ -196,7 +196,7 @@ export default function CausePage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">인과 의존성 그래프 · {graph ? ko(graph.effect) : "—"} 연결</span><span className="sub">{graph ? `|r|≥0.4 · 사이클 시간순서 · n=${(graph.meta?.data_n ?? 0).toLocaleString()}` : "로딩"}</span></div>
+          <div className="h"><span className="ttl">인과 의존성 그래프 · {graph ? ko(graph.effect) : "—"} 연결</span><span className="sub">{graph ? "|r|≥0.4 · 사이클 시간순서" : "로딩"}</span></div>
           <div className="b" style={{ padding: 14 }}>
             {graph ? (
               <svg viewBox="0 0 460 280" style={{ width: "100%", height: 280, display: "block" }}>
@@ -233,9 +233,6 @@ export default function CausePage() {
                 })()}
               </svg>
             ) : <div style={{ fontSize: 11, color: "var(--sx-text-3)", padding: 40, textAlign: "center" }}>인과 그래프 로딩 중…</div>}
-            <div style={{ fontSize: 9, color: "var(--sx-text-4)", fontWeight: 600, lineHeight: 1.5, marginTop: 2 }}>
-              ※ 엣지 = Pearson |r|≥0.4 + 사출 사이클 시간순서 만족 (인과 추정). 굵기=상관 강도. PC/GES 정식 인과 알고리즘은 본선 예정.
-            </div>
           </div>
         </div>
 
