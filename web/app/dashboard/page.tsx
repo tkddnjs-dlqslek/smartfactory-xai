@@ -95,11 +95,12 @@ export default function DashboardPage() {
   const [liveMode, setLiveMode] = useState<"off" | "demo" | "kamp">("off");
   const live = liveMode !== "off";
   const [tick, setTick] = useState(0);
-  const [liveLog, setLiveLog] = useState<{ t: string; status: string; recon: number; agree: number; sensor: string; sigma: string }[]>([]);
+  // 이상 이력: 시각 + 전체 예측결과 저장(클릭 시 카드에 복원). 스트림 정지해도 보존 → 드롭다운 탐색.
+  const [liveLog, setLiveLog] = useState<{ t: string; res: PredictResult }[]>([]);
+  const [selectedT, setSelectedT] = useState<string | null>(null);  // 이력에서 골라 고정 보기 중인 샷
   const [shots, setShots] = useState<number[][] | null>(null);
   const shotIdx = useRef(0);
 
-  useEffect(() => { if (liveMode === "off") { setTick(0); setLiveLog([]); } }, [liveMode]);
   useEffect(() => {
     if (liveMode === "off") return;
     if (liveMode === "demo" && !baseZ) return;
@@ -113,24 +114,29 @@ export default function DashboardPage() {
         const res = await api.predict(z);
         setR(res); setTick((t) => t + 1);
         if (res.severity >= 1) {  // 경고·위험·긴급 모두 이상으로 기록
-          const p0 = res.prescriptions[0];
-          setLiveLog((prev) => [{
-            t: new Date().toLocaleTimeString("ko-KR", { hour12: false }),
-            status: res.status, recon: res.recon_error, agree: res.agree,
-            sensor: p0?.sensor ?? "—", sigma: p0?.sigma ?? "",
-          }, ...prev].slice(0, 8));
+          const t = new Date().toLocaleTimeString("ko-KR", { hour12: false });
+          setLiveLog((prev) => [{ t, res }, ...prev].slice(0, 50));  // 최근 50건 보존(드롭다운용)
         }
       } catch { /* keep last */ }
     }, 1000);
     return () => clearInterval(id);
   }, [liveMode, baseZ, shots]);
 
+  function resetLive() { setTick(0); setLiveLog([]); setSelectedT(null); }
   async function startKamp() {
-    if (liveMode === "kamp") { setLiveMode("off"); return; }
+    if (liveMode === "kamp") { setLiveMode("off"); return; }   // 정지 — 이력 보존
     if (!shots) { try { const d = await api.shots(); setShots(d.shots); } catch { return; } }
-    shotIdx.current = 0; setLiveMode("kamp");
+    shotIdx.current = 0; resetLive(); setLiveMode("kamp");
   }
-  function startDemo() { setLiveMode((m) => (m === "demo" ? "off" : "demo")); }
+  function startDemo() {
+    if (liveMode === "demo") { setLiveMode("off"); return; }
+    resetLive(); setLiveMode("demo");
+  }
+  // 이상 이력 행/드롭다운에서 샷 선택 → 스트림 정지하고 그 샷을 카드에 고정 표시
+  function viewShot(entry: { t: string; res: PredictResult }) {
+    setLiveMode("off"); setR(entry.res); setSelectedT(entry.t);
+  }
+  function clearSelection() { setSelectedT(null); if (baseR) setR(baseR); }
 
   // ── 자연어 진단 보고서 (Claude Haiku 라이브 · 작업자 톤 단일) ──
   const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);
@@ -220,8 +226,8 @@ export default function DashboardPage() {
         </div>
         <div className={"kpi" + (live ? " red" : "")}>
           <div className="lbl">LIVE 불량률</div>
-          <div className="val num">{live && tick ? ((liveLog.length / tick) * 100).toFixed(1) : "—"}<span className="u">%</span></div>
-          <div className="ci">{live ? `이상 ${liveLog.length} / ${tick}샷 누적` : "LIVE 스트리밍 시 집계"}</div>
+          <div className="val num">{tick ? ((liveLog.length / tick) * 100).toFixed(1) : "—"}<span className="u">%</span></div>
+          <div className="ci">{tick ? `이상 ${liveLog.length} / ${tick}샷${live ? " 누적" : " (정지·세션)"}` : "LIVE 스트리밍 시 집계"}</div>
         </div>
       </div>
 
@@ -366,23 +372,50 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">이상 감지 이력 · LIVE 누적</span><span className="sub">{live ? `스트리밍 중 · ${liveLog.length}건 감지` : "LIVE 시작 시 실시간 누적"}</span></div>
+          <div className="h">
+            <span className="ttl">이상 감지 이력 · {live ? "LIVE 누적" : "세션"}</span>
+            <span className="sub">{live ? `스트리밍 중 · ${liveLog.length}건 — 행 클릭 시 정지·고정` : liveLog.length ? `정지 · ${liveLog.length}건 · 행/드롭다운으로 개별 확인` : "LIVE 시작 시 누적"}</span>
+          </div>
+          {/* 정지 후 드롭다운 — 기록된 이상 샷을 시간순으로 골라 보기 */}
+          {!live && liveLog.length > 0 && (
+            <div style={{ padding: "8px 12px", display: "flex", gap: 8, alignItems: "center", borderBottom: "1px solid var(--sx-border)" }}>
+              <span className="eyebrow">샷 선택</span>
+              <select value={selectedT ?? ""} onChange={(e) => { const en = liveLog.find((x) => x.t === e.target.value); if (en) viewShot(en); }}
+                style={{ flex: 1, background: "var(--sx-surface-2)", color: "var(--sx-text)", border: "1px solid var(--sx-border-2)", padding: "5px 8px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                <option value="">시간순 이상 샷 {liveLog.length}건 — 선택해 카드에서 확인</option>
+                {[...liveLog].reverse().map((e, i) => (
+                  <option key={e.t + i} value={e.t}>{e.t} · {STATUS_KO[e.res.status]} · {e.res.prescriptions[0]?.sensor ?? "—"} · 복원 {e.res.recon_error.toFixed(3)} · {e.res.agree}/4</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {selectedT && (
+            <div style={{ padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--sx-cyan-bg)", borderBottom: "1px solid var(--sx-cyan-bd)" }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "var(--sx-cyan)" }}>📌 {selectedT} 샷 고정 보기 중 — 위 카드가 이 샷 기준</span>
+              <button onClick={clearSelection} className="btn subtle" style={{ padding: "3px 10px", fontSize: 10.5, fontWeight: 700 }}>✕ 선택 해제</button>
+            </div>
+          )}
           <div className="b" style={{ padding: 0 }}>
             <table className="tbl">
               <thead><tr><th>시각</th><th>상태</th><th>주센서</th><th>복원오차</th><th>합의</th></tr></thead>
               <tbody>
-                {liveLog.map((e, i) => (
-                  <tr key={i}>
-                    <td className="num">{e.t}</td>
-                    <td><span className={"tag" + (e.status === "CRITICAL" || e.status === "DANGER" ? " red" : "")} style={e.status === "WARNING" ? { color: "var(--sx-cyan)" } : {}}>{STATUS_KO[e.status]}</span></td>
-                    <td>{e.sensor} {e.sigma}</td>
-                    <td className="num" style={{ color: "var(--sx-red-soft)" }}>{e.recon.toFixed(3)}</td>
-                    <td className="num">{e.agree}/4</td>
-                  </tr>
-                ))}
+                {liveLog.slice(0, 8).map((e, i) => {
+                  const p0 = e.res.prescriptions[0];
+                  const on = e.t === selectedT;
+                  return (
+                    <tr key={e.t + i} onClick={() => viewShot(e)} style={{ cursor: "pointer", background: on ? "var(--sx-cyan-bg)" : undefined }}>
+                      <td className="num">{e.t}</td>
+                      <td><span className={"tag" + (e.res.status === "CRITICAL" || e.res.status === "DANGER" ? " red" : "")} style={e.res.status === "WARNING" ? { color: "var(--sx-cyan)" } : {}}>{STATUS_KO[e.res.status]}</span></td>
+                      <td>{p0?.sensor ?? "—"} {p0?.sigma ?? ""}</td>
+                      <td className="num" style={{ color: "var(--sx-red-soft)" }}>{e.res.recon_error.toFixed(3)}</td>
+                      <td className="num">{e.res.agree}/4</td>
+                    </tr>
+                  );
+                })}
                 {!liveLog.length && <tr><td colSpan={5} style={{ color: "var(--sx-text-3)", padding: 14, textAlign: "center" }}>{live ? "이상 감지 대기 중…" : "▶ LIVE 스트리밍을 켜면 실시간 누적됩니다"}</td></tr>}
               </tbody>
             </table>
+            {liveLog.length > 8 && <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, padding: "4px 12px" }}>표는 최근 8건 · 전체 {liveLog.length}건은 위 드롭다운에서 선택</div>}
           </div>
         </div>
       </div>
