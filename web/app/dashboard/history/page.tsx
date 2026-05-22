@@ -193,9 +193,6 @@ export default function HistoryPage() {
                 </div>
               )}
 
-              <div style={{ fontSize: 9.5, color: "var(--sx-text-4)", fontWeight: 600, lineHeight: 1.5, marginTop: 2 }}>
-                ※ 실제 불량(ground truth) 기준 = 생산현황 Pareto와 정합. 탐지율은 모델 recall {agg ? (agg.recall * 100).toFixed(0) : "—"}%의 계통별 분해.
-              </div>
             </div>
           </div>
         </div>
