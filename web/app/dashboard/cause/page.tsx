@@ -161,11 +161,11 @@ export default function CausePage() {
                 const y0 = lo - pad, y1 = hi + pad;
                 const TOP = 44, BOT = 188;
                 const yOf = (v: number) => BOT - ((v - y0) / (y1 - y0)) * (BOT - TOP);
-                const n = wfBars.length, x0 = 40, step = 404 / n, bw = Math.min(50, step * 0.62);
+                const n = wfBars.length, x0 = 52, step = 336 / n, bw = Math.min(46, step * 0.62);
                 return (<>
-                  <line x1="24" y1={BOT} x2="444" y2={BOT} stroke="var(--sx-border-2)" strokeWidth="0.8" />
-                  <line x1="24" y1={yOf(base)} x2="444" y2={yOf(base)} stroke="var(--sx-text-4)" strokeWidth="0.6" strokeDasharray="3 3" opacity="0.6" />
-                  <text x="24" y={yOf(base) - 4} fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700">기준 {base.toFixed(3)}</text>
+                  <line x1="44" y1={BOT} x2="392" y2={BOT} stroke="var(--sx-border-2)" strokeWidth="0.8" />
+                  <line x1="44" y1={yOf(base)} x2="392" y2={yOf(base)} stroke="var(--sx-text-4)" strokeWidth="0.6" strokeDasharray="3 3" opacity="0.6" />
+                  <text x="4" y={yOf(base) - 4} fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700">기준 {base.toFixed(3)}</text>
                   {wfBars.map((s, i) => {
                     const before = acc[i], after = acc[i + 1];
                     const x = x0 + i * step + (step - bw) / 2;
@@ -187,7 +187,7 @@ export default function CausePage() {
                     );
                   })}
                   <circle cx={x0 + (n - 1) * step + (step - bw) / 2 + bw} cy={yOf(pred)} r="3.5" fill="var(--sx-red)" />
-                  <text x={x0 + (n - 1) * step + (step - bw) / 2 + bw + 4} y={yOf(pred) - 7} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="end">예측 {pred.toFixed(3)}</text>
+                  <text x={x0 + (n - 1) * step + (step - bw) / 2 + bw + 10} y={yOf(pred) + 3} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="start">예측 {pred.toFixed(3)}</text>
                 </>);
               })()}
               {(!wfBars.length || recon === null) && <text x="230" y="120" fill="var(--sx-text-3)" fontSize="11" textAnchor="middle">계산 중…</text>}
