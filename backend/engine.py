@@ -66,6 +66,10 @@ PRESCRIPTIONS = {
 }
 
 
+# 정상 검증샷 평균 복원오차 (SHAP 워터폴 기준선 — 고정 상수). val_scores 정상분 평균=0.0477.
+NORMAL_MEAN_ERR = 0.0477
+
+
 def _sigmoid_norm(score, thr, scale=3.0):
     return float(1.0 / (1.0 + np.exp(-(score - thr) * scale)))
 
@@ -213,11 +217,11 @@ class Engine:
             })
         # top_n의 양의 기여가 전체 이상 기여에서 차지하는 비중
         cum = round(sum(max(0.0, float(sv[int(i)])) for i in order) / total_pos, 3)
-        # 워터폴용 — 진짜 SHAP 기준값 E[f(X)] = 예측 - 전체 SHAP합 (배경 평균 복원오차, ≥0)
+        # 워터폴 기준 = 정상 평균 복원오차(고정 상수). SHAP 근사로 흔들리던 역산값 대신 의미있는 고정값 사용.
         pred_err = float(recon_error(self.ae, torch.from_numpy(x))[0].item())
-        sv_sum = float(sv.sum())
-        base = pred_err - sv_sum
-        rest = sv_sum - float(sum(sv[int(i)] for i in order))  # top_n 외 나머지 센서 순기여
+        base = NORMAL_MEAN_ERR
+        top_sum = float(sum(sv[int(i)] for i in order))
+        rest = pred_err - base - top_sum   # '기타' 막대 = 예측 - 기준 - top합 (나머지+근사오차 흡수, 닫힘 보장)
         return {"top": top, "cumulative": cum, "n_features": 24,
                 "base": round(base, 4), "pred": round(pred_err, 4),
                 "rest": round(rest, 4), "rest_n": 24 - len(order)}

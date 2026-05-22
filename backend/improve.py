@@ -159,7 +159,7 @@ def generate() -> dict:
     if client is not None:
         try:
             resp = client.messages.create(
-                model=MODEL, max_tokens=6000,
+                model=MODEL, max_tokens=6000, temperature=0,   # 일관성 — 같은 진단엔 같은 개선안
                 system=[{"type": "text", "text": SYSTEM, "cache_control": {"type": "ephemeral"}}],
                 messages=[{"role": "user", "content": f"[모델 사각지대 진단]\n{BLIND_SPOT}\n\n{CONTEXT}\n\n위 진단을 평가해 지정된 구분자 형식으로 개선안과 스캐폴드를 생성하라."}],
             )
