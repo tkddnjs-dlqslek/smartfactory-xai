@@ -153,7 +153,7 @@ export default function HistoryPage() {
               {agg && agg.blind.map((b) => (
                 <div key={b.g} style={{ padding: "8px 10px", background: "var(--sx-red-bg)", border: "1px solid var(--sx-red-bd)" }}>
                   <div style={{ fontSize: 11.5, fontWeight: 800, color: "var(--sx-red-soft)" }}>⚠ {b.g.split(" / ")[0]} 계통 · 탐지율 {((b.detected / b.defects) * 100).toFixed(0)}%</div>
-                  <div style={{ fontSize: 10, color: "var(--sx-text-2)", fontWeight: 600, marginTop: 3, lineHeight: 1.45 }}>불량 {b.defects}건 중 {b.defects - b.detected}건 미탐. AE 복원오차가 이 계통 이상에 둔감 → 온도 전용 임계/룰 모니터링 보강 권장.</div>
+                  <div style={{ fontSize: 10, color: "var(--sx-text-2)", fontWeight: 600, marginTop: 3, lineHeight: 1.45 }}>불량 {b.defects}건 중 {b.defects - b.detected}건 미탐. 4개 모델(AE·IF·OCSVM·LOF) 모두 이 계통 이상에 둔감 — 합의 임계를 풀어도 못 잡음 → 전용 룰/SPC 관리도 보강 권장.</div>
                 </div>
               ))}
               {agg && !agg.blind.length && <div style={{ fontSize: 11, color: "var(--sx-cyan)", fontWeight: 600 }}>✓ 전 계통 탐지율 50% 이상</div>}
