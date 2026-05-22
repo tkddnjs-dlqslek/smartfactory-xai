@@ -51,7 +51,7 @@ export default function BatchPage() {
       }
       const e = vs.errors[i], y = vs.labels[i], pred = e >= tau ? 1 : 0;
       out.push({ rank: out.length + 1, row: i, re: e, ratio: e / tau, main, sig, gt: y, pred });
-      if (out.length >= 20) break;
+      if (out.length >= 5) break;
     }
     return out;
   }, [vs, shots, tau]);
@@ -145,7 +145,7 @@ export default function BatchPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
         <div className="card">
-          <div className="h"><span className="ttl">상위 20건 이상 샷 · 복원오차 내림차순</span><span className="sub">검증 1,379샷 모델 실측 · 혼동행렬은 모델 신뢰도 탭 참조</span></div>
+          <div className="h"><span className="ttl">상위 5건 이상 샷 · 복원오차 내림차순</span><span className="sub">검증 1,379샷 모델 실측 · 혼동행렬은 모델 신뢰도 탭 참조</span></div>
           <div className="b" style={{ padding: 0 }}>
             <table className="tbl">
               <thead><tr><th>RANK</th><th>SHOT</th><th>RECON</th><th>비율(×τ)</th><th>주센서 (±σ)</th><th>실제</th><th>판정</th></tr></thead>
