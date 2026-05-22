@@ -18,10 +18,10 @@ export const TAB_ROUTES: Record<number, string> = {
 /* ───── 4-AI Consensus Meter ───── */
 export function Consensus({ votes = [1,1,1,0], scores = [0.412, 0.622, 0.511, 1.18], dense = false }: any) {
   const models = [
-    { id: "AE",    auc: 0.9254 },
-    { id: "IF",    auc: 0.9571 },
-    { id: "OCSVM", auc: 0.9600 },
-    { id: "LOF",   auc: 0.9312 },
+    { id: "AE",    auc: 0.9254, s: "평소 패턴과 전체가 다를 때" },
+    { id: "IF",    auc: 0.9571, s: "값이 혼자 크게 튈 때" },
+    { id: "OCSVM", auc: 0.9600, s: "정상 범위를 벗어날 때" },
+    { id: "LOF",   auc: 0.9312, s: "주변 이웃과 동떨어질 때" },
   ];
   const agree = votes.filter((v: number) => v).length;
   return (
@@ -30,7 +30,8 @@ export function Consensus({ votes = [1,1,1,0], scores = [0.412, 0.622, 0.511, 1.
         {models.map((m, i) => (
           <div key={m.id} className={"m" + (votes[i] ? " fire" : "")}>
             <div className="id">{m.id}</div>
-            <div className="v" style={{color: votes[i] ? "var(--sx-red-soft)" : "var(--sx-text)"}}>
+            <div style={{ fontSize: 8.5, fontWeight: 700, color: "var(--sx-text-4)", lineHeight: 1.3, marginTop: 2, minHeight: 22 }}>{m.s}</div>
+            <div className="v" style={{color: votes[i] ? "var(--sx-red-soft)" : "var(--sx-text)", marginTop: 3}}>
               {scores[i].toFixed(3)}
             </div>
             <div className="auc">AUC {m.auc.toFixed(4)}</div>

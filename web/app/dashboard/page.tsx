@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [r, setR] = useState<PredictResult | null>(null);
   const [baseR, setBaseR] = useState<PredictResult | null>(null);  // 시나리오 고정 baseline (스트리밍과 독립)
   const [ens, setEns] = useState<any>(null);  // 실측 합의 비교 (ensemble_metrics)
+  const [selShot, setSelShot] = useState<{ z: number[]; recon: number } | null>(null);  // 이력에서 선택한 라이브 샷 (What-if/카드 기준)
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +43,7 @@ export default function DashboardPage() {
   }, []);
 
   async function pick(i: number) {
-    setSel(i); setErr(null); scenarioStore.set(i); analysisStore.clear(); setSelectedT(null);  // 시나리오 선택 → Tab2도 시나리오로
+    setSel(i); setErr(null); scenarioStore.set(i); analysisStore.clear(); setSelectedT(null); setSelShot(null);  // 시나리오 선택 → Tab2·What-if도 시나리오로
     try { const pr = await api.predict(scenarios[i].z); setR(pr); setBaseR(pr); }
     catch (e: any) { setErr(e.message || "예측 실패"); }
   }
@@ -57,38 +58,40 @@ export default function DashboardPage() {
     });
   }, [scenarios, sel]);
 
-  // ── What-if: 현재 시나리오의 이상 Top-3 센서를 정상(0)쪽으로 슬라이딩 → 재예측 ──
+  // ── What-if: 분석 대상(activeZ)의 이상 Top-3 센서를 정상(0)쪽으로 슬라이딩 → 재예측 ──
+  // activeZ = 이력에서 고른 라이브 샷(있으면) / 없으면 선택 시나리오 z
   const baseZ = scenarios[sel]?.z;
+  const activeZ = selShot?.z ?? baseZ;
   const topIdx = useMemo(() => {
-    if (!baseZ) return [];
-    return baseZ
+    if (!activeZ) return [];
+    return activeZ
       .map((v, i) => [Math.abs(v), i] as [number, number])
       .sort((a, b) => b[0] - a[0])
       .slice(0, 3)
       .map(([, i]) => i);
-  }, [baseZ]);
+  }, [activeZ]);
 
   const [wfFrac, setWfFrac] = useState<number[]>([0, 0, 0]);
   const [wfResult, setWfResult] = useState<PredictResult | null>(null);
   const wfTimer = useRef<any>(null);
 
-  // 시나리오 바뀌면 슬라이더 초기화
-  useEffect(() => { setWfFrac([0, 0, 0]); setWfResult(null); }, [sel]);
+  // 분석 대상(시나리오/라이브 샷)이 바뀌면 슬라이더 초기화
+  useEffect(() => { setWfFrac([0, 0, 0]); setWfResult(null); }, [sel, selShot]);
 
-  // 슬라이더 변경 시 debounce 재예측
+  // 슬라이더 변경 시 debounce 재예측 — activeZ 기준
   useEffect(() => {
-    if (!baseZ || topIdx.length === 0) return;
-    const modZ = baseZ.slice();
-    topIdx.forEach((idx, k) => { modZ[idx] = baseZ[idx] * (1 - wfFrac[k]); });
+    if (!activeZ || topIdx.length === 0) return;
+    const modZ = activeZ.slice();
+    topIdx.forEach((idx, k) => { modZ[idx] = activeZ[idx] * (1 - wfFrac[k]); });
     clearTimeout(wfTimer.current);
     wfTimer.current = setTimeout(async () => {
       try { setWfResult(await api.predict(modZ)); } catch { /* keep last */ }
     }, 220);
     return () => clearTimeout(wfTimer.current);
-  }, [wfFrac, baseZ, topIdx]);
+  }, [wfFrac, activeZ, topIdx]);
 
-  // What-if 기준은 시나리오 고정 baseline(baseR) — 라이브 스트리밍(r)과 무관하게 안정
-  const wfBefore = baseR?.recon_error ?? 0;
+  // What-if 기준 = 분석 대상의 고정 복원오차 (라이브 샷이면 그 샷, 아니면 시나리오 baseline)
+  const wfBefore = selShot?.recon ?? baseR?.recon_error ?? 0;
   const wfAfter = wfResult?.recon_error ?? wfBefore;
   const wfDelta = wfBefore > 0 ? Math.round((wfAfter / wfBefore - 1) * 100) : 0;
 
@@ -139,24 +142,25 @@ export default function DashboardPage() {
   // 이상 이력 행/드롭다운에서 샷 선택 → 스트림 정지 + 카드 고정 + 원인분석(Tab2)도 같은 샷으로 동기화
   function viewShot(entry: LiveEntry) {
     setLiveMode("off"); setR(entry.res); setSelectedT(entry.t);
+    setSelShot({ z: entry.z, recon: entry.res.recon_error });  // What-if도 이 샷 기준
     analysisStore.set(entry.z, `라이브 ${entry.t}`);   // Tab2가 동일 샷을 분석하도록
   }
-  function clearSelection() { setSelectedT(null); analysisStore.clear(); if (baseR) setR(baseR); }
+  function clearSelection() { setSelectedT(null); setSelShot(null); analysisStore.clear(); if (baseR) setR(baseR); }
 
   // ── 자연어 진단 보고서 (Claude Haiku 라이브 · 작업자 톤 단일) ──
   const [nlg, setNlg] = useState<{ text: string; model: string } | null>(null);
   const [nlgLoading, setNlgLoading] = useState(false);
 
   useEffect(() => {
-    if (!baseZ) return;
+    if (!activeZ) return;
     let cancelled = false;
     setNlgLoading(true);
-    api.report(baseZ, "worker")
+    api.report(activeZ, "worker")   // 선택 샷(라이브/시나리오) 기준 보고서
       .then((res) => { if (!cancelled) setNlg({ text: res.text, model: res.model }); })
       .catch(() => { if (!cancelled) setNlg(null); })
       .finally(() => { if (!cancelled) setNlgLoading(false); });
     return () => { cancelled = true; };
-  }, [baseZ]);
+  }, [activeZ]);
 
   const sev = r?.severity ?? 0;
   const isDanger = sev >= 2;
@@ -261,25 +265,6 @@ export default function DashboardPage() {
                 votes={r ? r.votes : [0, 0, 0, 0]}
                 scores={r ? r.scores : [0, 0, 0, 0]}
               />
-              <div style={{
-                marginTop: 14, padding: "10px 12px",
-                background: "var(--sx-cyan-bg)", border: "1px dashed var(--sx-cyan-bd)"
-              }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--sx-cyan)", letterSpacing: 0.4 }}>
-                  ⓘ 단일 모델 거짓경보 → 4-AI 합의로 해소 (검증 1,379샷 실측)
-                </div>
-                {ens ? (() => {
-                  const u = ens.consensus_modes[">=1of4"], h = ens.consensus_modes[">=3of4"];
-                  const drop = u.fp ? Math.round((1 - h.fp / u.fp) * 100) : 0;
-                  return (
-                    <div style={{ fontSize: 10.5, color: "var(--sx-text-3)", fontWeight: 600, marginTop: 4, lineHeight: 1.5 }}>
-                      아무 모델이나 1개 발동(≥1/4) 시 거짓경보 {u.fp}건·정밀도 {u.precision.toFixed(2)}. ≥3/4 엄격 합의로 전환하면 거짓경보 {h.fp}건(−{drop}%)·정밀도 {h.precision.toFixed(2)}·재현율 {h.recall.toFixed(2)}. 한 모델이 틀려도 견고.
-                    </div>
-                  );
-                })() : (
-                  <div style={{ fontSize: 10.5, color: "var(--sx-text-4)", fontWeight: 600, marginTop: 4 }}>합의 지표 로딩 중…</div>
-                )}
-              </div>
             </div>
           </div>
 
@@ -334,7 +319,7 @@ export default function DashboardPage() {
           </div>
           <div className="b" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {topIdx.map((idx, k) => {
-              const z = baseZ ? baseZ[idx] : 0;
+              const z = activeZ ? activeZ[idx] : 0;
               const target = z * (1 - wfFrac[k]);
               return (
                 <div key={idx}>
