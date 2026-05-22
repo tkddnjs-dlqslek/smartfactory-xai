@@ -32,7 +32,10 @@ export interface PredictResult {
 export interface Scenario { name: string; z: number[]; }
 
 export interface ShapTop { name: string; shap: number; abs_shap: number; sigma: string; }
-export interface ExplainResult { top: ShapTop[]; cumulative: number; n_features: number; }
+export interface ExplainResult {
+  top: ShapTop[]; cumulative: number; n_features: number;
+  base?: number; pred?: number; rest?: number; rest_n?: number;
+}
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {

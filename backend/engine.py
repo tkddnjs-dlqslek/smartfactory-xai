@@ -211,7 +211,14 @@ class Engine:
                 "sigma": f"{'+' if zlist[i] >= 0 else ''}{zlist[i]:.1f}σ",
             })
         cum = round(sum(t["abs_shap"] for t in top) / total_abs, 3)
-        return {"top": top, "cumulative": cum, "n_features": 24}
+        # 워터폴용 — 진짜 SHAP 기준값 E[f(X)] = 예측 - 전체 SHAP합 (배경 평균 복원오차, ≥0)
+        pred_err = float(recon_error(self.ae, torch.from_numpy(x))[0].item())
+        sv_sum = float(sv.sum())
+        base = pred_err - sv_sum
+        rest = sv_sum - float(sum(sv[int(i)] for i in order))  # top_n 외 나머지 센서 순기여
+        return {"top": top, "cumulative": cum, "n_features": 24,
+                "base": round(base, 4), "pred": round(pred_err, 4),
+                "rest": round(rest, 4), "rest_n": 24 - len(order)}
 
 
 # 모듈 싱글톤 (앱 기동 시 1회 로드)

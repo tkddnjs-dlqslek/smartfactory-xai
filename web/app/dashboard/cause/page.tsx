@@ -22,6 +22,7 @@ export default function CausePage() {
   const [top, setTop] = useState<ShapTop[]>([]);
   const [cum, setCum] = useState<number | null>(null);
   const [recon, setRecon] = useState<number | null>(null);
+  const [wf, setWf] = useState<{ base: number; pred: number; rest: number; rest_n: number } | null>(null);
   const [scName, setScName] = useState("긴급 #37");
   const [pca, setPca] = useState<any>(null);
   const [causal, setCausal] = useState<any>(null);
@@ -37,6 +38,8 @@ export default function CausePage() {
         const z = scenarios[idx].z;
         const [ex, pr] = await Promise.all([api.explain(z, 5), api.predict(z)]);
         setTop(ex.top); setCum(ex.cumulative); setRecon(pr.recon_error);
+        if (ex.base !== undefined && ex.pred !== undefined && ex.rest !== undefined)
+          setWf({ base: ex.base, pred: ex.pred, rest: ex.rest, rest_n: ex.rest_n ?? 19 });
       } catch (e: any) {
         setErr(e.message || "SHAP 연결 실패");
       }
@@ -77,14 +80,25 @@ export default function CausePage() {
     const normal: [number, number][] = [];
     for (let i = 0; i < pca.normal_pc1.length; i += step) normal.push([sx(pca.normal_pc1[i]), sy(pca.normal_pc2[i])]);
     const defect: [number, number][] = pca.defect_pc1.map((v: number, i: number) => [sx(v), sy(pca.defect_pc2[i])]);
-    return { normal, defect, ev: pca.explained_var };
+    // 축 의미 = 각 주성분의 최대 기여 센서 (실측 loadings)
+    const topSensor = (pc: number) => {
+      if (!pca.pca_components?.[pc]) return "";
+      const cols = pca.sensor_cols as string[];
+      let mi = 0, mv = 0; pca.pca_components[pc].forEach((w: number, i: number) => { if (Math.abs(w) > mv) { mv = Math.abs(w); mi = i; } });
+      return ko(cols[mi]);
+    };
+    return { normal, defect, ev: pca.explained_var, ax1: topSensor(0), ax2: topSensor(1) };
   })();
 
   const maxAbs = top.length ? Math.max(...top.map(t => t.abs_shap)) : 1;
-  // 워터폴: 실측 SHAP 기여를 baseline→prediction 누적. baseline = 예측 - Σ(top shap)
-  const sumTop = top.reduce((s, t) => s + t.shap, 0);
-  const pred = recon ?? 0;
-  const base = pred - sumTop;
+  // 워터폴: 진짜 SHAP 기준값 E[f(X)](배경 평균 복원오차)에서 top-5 + 기타 누적 → 예측
+  const base = wf?.base ?? 0;
+  const pred = wf?.pred ?? recon ?? 0;
+  // 막대 시퀀스: top-5 SHAP + "기타 N센서"(나머지 순기여)
+  const wfBars = wf
+    ? [...top.map((t) => ({ name: t.name, label: t.name, shap: t.shap, sigma: t.sigma })),
+       { name: "__rest__", label: `기타 ${wf.rest_n}센서`, shap: wf.rest, sigma: "" }]
+    : top.map((t) => ({ name: t.name, label: t.name, shap: t.shap, sigma: t.sigma }));
 
   return (
     <DashShell activeTab={2} scenario={scName}
@@ -112,49 +126,49 @@ export default function CausePage() {
         </div>
 
         <div className="card">
-          <div className="h"><span className="ttl">SHAP Waterfall · 누적 분해</span><span className="sub">{recon !== null ? `기준 ${base.toFixed(3)} → 예측 ${pred.toFixed(3)}` : "계산 중"}</span></div>
+          <div className="h"><span className="ttl">SHAP Waterfall · 누적 분해</span><span className="sub">{recon !== null ? `기준 ${base.toFixed(3)} → 예측 ${pred.toFixed(3)} (복원오차)` : "계산 중"}</span></div>
           <div className="b">
             <svg viewBox="0 0 460 250" style={{ width: "100%", height: 250, display: "block" }}>
               {(() => {
-                if (!top.length || recon === null) return null;
-                // 누적 궤적: base → +shap … → pred. 실제 최소·최대로 스케일 (감소형 워터폴도 정상 처리)
+                if (!wfBars.length || recon === null) return null;
+                // 누적 궤적: 기준 E[f(X)] → +SHAP … → +기타 → 예측. 실제 min/max로 스케일.
                 const acc: number[] = [base]; let a = base;
-                top.forEach((s) => { a += s.shap; acc.push(a); });
-                const lo = Math.min(...acc, pred), hi = Math.max(...acc, base);
-                const pad = (hi - lo) * 0.18 || 0.05;
+                wfBars.forEach((s) => { a += s.shap; acc.push(a); });
+                const lo = Math.min(...acc, pred), hi = Math.max(...acc, base, pred);
+                const pad = (hi - lo) * 0.2 || 0.05;
                 const y0 = lo - pad, y1 = hi + pad;
-                const TOP = 40, BOT = 196;
+                const TOP = 44, BOT = 188;
                 const yOf = (v: number) => BOT - ((v - y0) / (y1 - y0)) * (BOT - TOP);
-                const bw = 52, gap = 78, x0 = 40;
+                const n = wfBars.length, x0 = 40, step = 404 / n, bw = Math.min(50, step * 0.62);
                 return (<>
-                  {/* 축 */}
                   <line x1="24" y1={BOT} x2="444" y2={BOT} stroke="var(--sx-border-2)" strokeWidth="0.8" />
-                  {/* 기준선 (baseline dashed) */}
                   <line x1="24" y1={yOf(base)} x2="444" y2={yOf(base)} stroke="var(--sx-text-4)" strokeWidth="0.6" strokeDasharray="3 3" opacity="0.6" />
                   <text x="24" y={yOf(base) - 4} fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700">기준 {base.toFixed(3)}</text>
-                  {top.map((s, i) => {
+                  {wfBars.map((s, i) => {
                     const before = acc[i], after = acc[i + 1];
-                    const x = x0 + i * gap;
+                    const x = x0 + i * step + (step - bw) / 2;
                     const yTop = yOf(Math.max(before, after));
                     const yBot = yOf(Math.min(before, after));
                     const pos = s.shap >= 0;
-                    const labelAbove = yTop > TOP + 16;  // 막대가 너무 위면 라벨을 아래로
+                    const isRest = s.name === "__rest__";
+                    const fill = isRest ? "var(--sx-text-3)" : (pos ? "var(--sx-red)" : "var(--sx-cyan)");
+                    const labelAbove = yTop > TOP + 14;
+                    const nm = isRest ? s.label : (ko(s.name).length > 6 ? ko(s.name).slice(0, 6) : ko(s.name));
                     return (
                       <g key={s.name}>
-                        <rect x={x} y={yTop} width={bw} height={Math.max(2, yBot - yTop)} fill={pos ? "var(--sx-red)" : "var(--sx-cyan)"} fillOpacity="0.78" />
-                        {i < top.length - 1 && <line x1={x + bw} y1={yOf(after)} x2={x + gap} y2={yOf(after)} stroke="var(--sx-border-2)" strokeWidth="0.8" strokeDasharray="2 2" />}
-                        <text x={x + bw / 2} y={labelAbove ? yTop - 5 : yBot + 12} fill={pos ? "var(--sx-red-soft)" : "var(--sx-cyan)"} fontSize="9" fontWeight="800" textAnchor="middle" fontFamily="ui-monospace">{pos ? "+" : ""}{s.shap.toFixed(3)}</text>
-                        <text x={x + bw / 2} y={BOT + 14} fill="var(--sx-text-3)" fontSize="7.5" fontWeight="700" textAnchor="middle">{(s.name.length > 11 ? s.name.slice(0, 10) + "…" : s.name).replace(/_/g, " ")}</text>
-                        <text x={x + bw / 2} y={BOT + 24} fill="var(--sx-text-4)" fontSize="7.5" fontWeight="700" textAnchor="middle">{s.sigma}</text>
+                        <rect x={x} y={yTop} width={bw} height={Math.max(2, yBot - yTop)} fill={fill} fillOpacity={isRest ? 0.5 : 0.8} />
+                        {i < n - 1 && <line x1={x + bw} y1={yOf(after)} x2={x0 + (i + 1) * step + (step - bw) / 2} y2={yOf(after)} stroke="var(--sx-border-2)" strokeWidth="0.8" strokeDasharray="2 2" />}
+                        <text x={x + bw / 2} y={labelAbove ? yTop - 4 : yBot + 11} fill={isRest ? "var(--sx-text-3)" : (pos ? "var(--sx-red-soft)" : "var(--sx-cyan)")} fontSize="8.5" fontWeight="800" textAnchor="middle" fontFamily="ui-monospace">{pos ? "+" : ""}{s.shap.toFixed(3)}</text>
+                        <text x={x + bw / 2} y={BOT + 13} fill="var(--sx-text-3)" fontSize="7.5" fontWeight="700" textAnchor="middle">{nm}</text>
+                        {!isRest && <text x={x + bw / 2} y={BOT + 23} fill="var(--sx-text-4)" fontSize="7.5" fontWeight="700" textAnchor="middle">{s.sigma}</text>}
                       </g>
                     );
                   })}
-                  {/* 예측 종점 마커 — 마지막 막대 오른쪽 빈 공간 */}
-                  <circle cx={x0 + (top.length - 1) * gap + bw} cy={yOf(pred)} r="3.5" fill="var(--sx-red)" />
-                  <text x={x0 + (top.length - 1) * gap + bw + 8} y={yOf(pred) + 3} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="start">예측 {pred.toFixed(3)}</text>
+                  <circle cx={x0 + (n - 1) * step + (step - bw) / 2 + bw} cy={yOf(pred)} r="3.5" fill="var(--sx-red)" />
+                  <text x={x0 + (n - 1) * step + (step - bw) / 2 + bw + 6} y={yOf(pred) + 3} fill="var(--sx-red-soft)" fontSize="9" fontWeight="800" textAnchor="start">예측</text>
                 </>);
               })()}
-              {(!top.length || recon === null) && <text x="230" y="120" fill="var(--sx-text-3)" fontSize="11" textAnchor="middle">계산 중…</text>}
+              {(!wfBars.length || recon === null) && <text x="230" y="120" fill="var(--sx-text-3)" fontSize="11" textAnchor="middle">계산 중…</text>}
             </svg>
           </div>
         </div>
@@ -215,8 +229,8 @@ export default function CausePage() {
               {pcaPts?.defect.map((p, i) => (
                 <circle key={"a" + i} cx={p[0]} cy={p[1]} r="3" fill="#D42121" opacity="0.9" stroke="#fff" strokeWidth="0.4" />
               ))}
-              <text x="440" y="206" fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700" textAnchor="end">PC1 · 공정 종합(위치·압력) {pcaPts ? (pcaPts.ev[0] * 100).toFixed(0) : "—"}% →</text>
-              <text x="12" y="102" fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700" textAnchor="middle" transform="rotate(-90 12 102)">PC2 · 금형온도 {pcaPts ? (pcaPts.ev[1] * 100).toFixed(0) : "—"}% →</text>
+              <text x="440" y="206" fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700" textAnchor="end">PC1 · {pcaPts?.ax1 || "주성분1"} 중심 {pcaPts ? (pcaPts.ev[0] * 100).toFixed(0) : "—"}% →</text>
+              <text x="12" y="102" fill="var(--sx-text-3)" fontSize="8.5" fontWeight="700" textAnchor="middle" transform="rotate(-90 12 102)">PC2 · {pcaPts?.ax2 || "주성분2"} 중심 {pcaPts ? (pcaPts.ev[1] * 100).toFixed(0) : "—"}% →</text>
               {!pcaPts && <text x="244" y="100" fill="var(--sx-text-3)" fontSize="10" fontWeight="700" textAnchor="middle">PCA 로딩 중…</text>}
             </svg>
             <div style={{ display: "flex", gap: 16, fontSize: 10, fontWeight: 700, marginTop: 6, alignItems: "center", flexWrap: "wrap" }}>
