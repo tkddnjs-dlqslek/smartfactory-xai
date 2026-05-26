@@ -104,49 +104,6 @@ export function Gauge({ value = 0.412, threshold = 0.320, label = "RECON ERROR",
   );
 }
 
-/* ───── sparkline ───── */
-export function Spark({ data, threshold, height = 60, color, alertIdx = null }: any) {
-  const w = 100, h = height;
-  const max = Math.max(...data, threshold * 1.5);
-  const points = data.map((v: number, i: number) => `${i === 0 ? "M" : "L"} ${(i/(data.length-1))*w} ${h - (v/max)*(h-4) - 2}`).join(" ");
-  const tY = h - (threshold/max)*(h-4) - 2;
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{width:"100%", height:"100%", display:"block"}}>
-      <line x1="0" y1={tY} x2={w} y2={tY} stroke="var(--sx-red)" strokeWidth="0.4" strokeDasharray="1.5 1.5"/>
-      <path d={points} fill="none" stroke={color || "var(--sx-cyan)"} strokeWidth="0.7"/>
-      {data.map((v: number, i: number) => v > threshold ? (
-        <circle key={i} cx={(i/(data.length-1))*w} cy={h - (v/max)*(h-4) - 2} r="1.2" fill="var(--sx-red)"/>
-      ) : null)}
-      {alertIdx !== null && (
-        <line x1={(alertIdx/(data.length-1))*w} y1="0" x2={(alertIdx/(data.length-1))*w} y2={h} stroke="var(--sx-red)" strokeWidth="0.5" strokeDasharray="2 1.5"/>
-      )}
-    </svg>
-  );
-}
-
-/* ───── helper ───── */
-export function makeSeries(len = 60, spikeIdx = -1, spikeMag = 0.45, base = 0.07, noise = 0.022) {
-  const out: number[] = [];
-  for (let i = 0; i < len; i++) {
-    let v = base + Math.sin(i*0.35)*noise + (Math.random()-0.5)*noise;
-    if (i === spikeIdx) v = spikeMag;
-    if (i === spikeIdx + 1) v = spikeMag * 0.78;
-    if (i === spikeIdx + 2) v = spikeMag * 0.42;
-    out.push(Math.max(0, v));
-  }
-  return out;
-}
-
-/* ───── annotated number ───── */
-export function Annot({ value, unit, tag = "real", size = 14, color }: any) {
-  return (
-    <span style={{display:"inline-flex", alignItems:"baseline", gap:5}}>
-      <span className="num" style={{fontSize: size, fontWeight: 800, color: color || "var(--sx-text)"}}>{value}{unit ? <span style={{fontSize: size*0.55, color:"var(--sx-text-3)", marginLeft:2}}>{unit}</span> : null}</span>
-      <span className={"tag " + tag}>{tag === "real" ? "실측" : tag === "est" ? "추정치" : "가정"}</span>
-    </span>
-  );
-}
-
 /* ───── topbar for dashboard ───── */
 export function TopBar({ width = 1440 }: any) {
   return (
@@ -220,30 +177,7 @@ export function Sidebar({ active = 1, scenario = "정상", width = 280 }: any) {
   );
 }
 
-/* ───── tab bar ───── */
-export function TabBar({ active = 1 }: any) {
-  const tabs = [
-    { i:1, l:"실시간 진단" },
-    { i:2, l:"불량 원인 분석" },
-    { i:3, l:"전체 이력 분석" },
-    { i:4, l:"설비 예지정비" },
-    { i:5, l:"안전 모니터링" },
-    { i:6, l:"생산 · OEE" },
-    { i:7, l:"모델 신뢰도" },
-  ];
-  return (
-    <div className="tabs">
-      {tabs.map(t => (
-        <Link key={t.i} href={TAB_ROUTES[t.i]} className={"t" + (t.i === active ? " active" : "")} style={{textDecoration:"none", color:"inherit"}}>
-          <span className="n mono">{t.i.toString().padStart(2,"0")}</span>
-          <span>{t.l}</span>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-/* ───── dashboard shell (TopBar + Sidebar + TabBar + 헤더) ───── */
+/* ───── dashboard shell (TopBar + Sidebar + 헤더) ───── */
 export function DashShell({ activeTab, scenario = "정상", children, headline, sub }: any) {
   return (
     <div className="sx" style={{ width: "100%", display: "flex", flexDirection: "column", minHeight: "100vh" }}>

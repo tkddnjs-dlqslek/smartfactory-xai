@@ -105,13 +105,9 @@ np.save(os.path.join(RESULT_DIR, 'val_errors.npy'), errors)
 
 print(f"\n시각화 4개 + 곡선 데이터 저장 → results/")
 
-# ── 보고서 자동 갱신 ──
-try:
-    from scripts.update_report import write_status
-    write_status()
-except Exception:
-    import subprocess, sys as _sys
-    subprocess.run([_sys.executable, os.path.join(os.path.dirname(__file__), '05_update_report.py')],
-                   check=False, capture_output=True)
+# ── 보고서 자동 갱신 ── (숫자 접두사 파일명이라 import 불가, subprocess로 호출)
+import subprocess, sys as _sys
+subprocess.run([_sys.executable, os.path.join(os.path.dirname(__file__), '05_update_report.py')],
+               check=False, capture_output=True)
 
 print("완료!")
