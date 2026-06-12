@@ -19,8 +19,8 @@
 | 2 | 프로젝트 개요 (스탯 카드 4 + 테크스택) | — |
 | 3 | 문제 정의 — 3대 문제 | — |
 | 4 | 시스템 아키텍처 — 단일 엔진 → 4축 분기 | — |
-| 5 | TAB 01 실시간 진단 (위험 시나리오) | 03_tab1_danger_top.png |
-| 6 | TAB 01 실측 KAMP 스트림 | 05_tab1_live_stream.png |
+| 5 | TAB 01 실시간 진단 (NLG 보고서 · What-if · 이상이력) | 03_tab1_danger_nlg.png |
+| 6 | TAB 01 실측 KAMP 스트림 (NLG 보고서 · 이상이력 테이블) | 05_tab1_live_nlg.png |
 | 7 | TAB 02 SHAP 원인분석 | 06_tab2_shap_top.png |
 | 8 | TAB 03 임계값 시뮬레이터 | 07_tab3_batch_top.png |
 | 9 | TAB 04 설비 예지정비 | 08_tab4_rul_top.png |
@@ -48,7 +48,7 @@
 | 12 | CI [0.879, 0.966] · Hard Voting F1 0.761★ · Stacking LOOCV F1 0.691(오버피팅 의심) · τ 0.3198 vs 0.5171 · FN 50만/FP 3만 | 라이브 사이트 재검증 일치 |
 | 13 | 온도 불량 11건 중 탐지 0건 · 미탐 13 중 11 온도 · 합집합 Recall 0.79(실측 0.795) | 일치 |
 
-**각주(불일치 아님):** 슬라이드 5 "Claude 자연어 보고서", 슬라이드 6 "이상 감지 이력"은 해당 탭 하단 영역 기능 — 상단부 캡처에는 미표시. 발표 시 언급 또는 풀페이지 캡처(`04_tab1_danger_full.png`)로 대체 가능.
+**참고:** 슬라이드 5·6 캡처는 Tab01 scrollHeight=1474px 하단 섹션(scroll 574px~). WHAT-IF · 자연어 진단 보고서(Claude Haiku) · 이상 감지 이력 3열 구성이 화면에 보임.
 
 ## 4. 레이아웃 품질 규칙 (재생성 시 유지할 것)
 
