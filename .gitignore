@@ -53,9 +53,12 @@ backend/.env
 
 # ── 배포 불필요 산출물 ──
 _design_package/
-output/
+output/*
 results/_m2m3_experiment/
 *.pptx
+# 포트폴리오 산출물은 예외 (PORTFOLIO_SPEC.md 참고)
+!output/_pptx_shots/
+!output/스마트공장XAI_포트폴리오.pptx
 
 # ── 학습 중간/백업 아티팩트 (런타임 불필요) ──
 models/*_v2*.npy
@@ -67,3 +70,4 @@ models/*.before_m2m3
 models/X_val.npy
 models/y_val.npy
 backend_run.log
+.gstack/
